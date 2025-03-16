@@ -7,5 +7,7 @@ export const db = mysql.createConnection({
     database: "turboOrder"
 });
 
-// CREATE USER 'turboOrder'@'localhost' IDENTIFIED WITH mysql_native_password BY 'turboOrder';
-// GRANT ALL PRIVILEGES ON turboOrder TO 'turboOrder'@'localhost' WITH GRANT OPTION;
+// CREATE USER 'turboOrder'@'localhost' IDENTIFIED BY 'turboOrder';
+// GRANT ALL PRIVILEGES ON mydb.* TO 'turboOrder'@'localhost';
+// CREATE TABLE turboOrder;
+// USE turboOrder;
