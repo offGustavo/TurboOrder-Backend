@@ -1,5 +1,5 @@
 -- pro_produto
-CREATE TABLE pro_produto ( pro_id INT PRIMARY KEY, pro_nome VARCHAR(255), pro_tipo VARCHAR(255), pro_ativo boolean);
+CREATE TABLE pro_produto ( pro_id INT PRIMARY KEY AUTO_INCREMENT, pro_nome VARCHAR(255), pro_tipo VARCHAR(255), pro_ativo boolean);
 
 INSERT INTO pro_produto (pro_id, pro_nome, pro_tipo, pro_ativo) VALUES 
 (1, 'Arroz Branco', 'Arroz', true),
