@@ -72,6 +72,7 @@ CREATE TABLE cli_cliente (
     empresa_fk INT,
     cli_numero INT,
     cli_complemento VARCHAR(255),
+    cli_ativo BOOLEAN DEFAULT TRUE,
     FOREIGN KEY (endereco_fk) REFERENCES end_endereco(end_id),
     FOREIGN KEY (contato_fk) REFERENCES con_contato(con_id),
     FOREIGN KEY (empresa_fk) REFERENCES emp_empresa(emp_id)
@@ -83,6 +84,7 @@ CREATE TABLE fun_funcionario (
     fun_email VARCHAR(255) NOT NULL UNIQUE
 );
 
+-- TODO: Criar tabela de valor do pedido
 CREATE TABLE ped_pedido (
     ped_id INT PRIMARY KEY AUTO_INCREMENT,
     cliente_fk INT,
