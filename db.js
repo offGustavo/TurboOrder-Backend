@@ -8,6 +8,6 @@ export const db = mysql.createConnection({
 });
 
 // CREATE USER 'turboOrder'@'localhost' IDENTIFIED BY 'turboOrder';
-// GRANT ALL PRIVILEGES ON mydb.* TO 'turboOrder'@'localhost';
+// GRANT ALL PRIVILEGES ON turboOrder.* TO 'turboOrder'@'localhost';
 // CREATE TABLE turboOrder;
 // USE turboOrder;
