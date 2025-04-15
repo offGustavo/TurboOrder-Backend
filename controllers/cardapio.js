@@ -1,58 +1,76 @@
+// controllers/cardapio.js
+
 import { db } from "../db.js";
 
+// GET - Pega cardápio por data
 export const getCardapioByDate = (req, res) => {
-  const { data } = req.query;
-  const q = "SELECT * FROM car_cardapio WHERE car_data = ?";
+  const data = req.query.data;
 
-  db.query(q, [data], (err, data) => {
-    if (err) return res.json(err);
-
-    res.status(200).json(data[0] || null);
-  });
-};
-
-export const addCardapio = (req, res) => {
-  const q = "INSERT INTO car_cardapio (car_data) VALUES (?)";
-
-  db.query(q, [req.body.car_data], (err, result) => {
-    if (err) return res.json(err);
-
-    res.status(200).json({ car_id: result.insertId, car_data: req.body.car_data });
-  });
-};
-
-export const getItemsByCardapio = (req, res) => {
-  const { car_fk } = req.query;
   const q = `
-    SELECT d.*, p.pro_nome, p.pro_tipo 
+    SELECT p.pro_id, p.pro_nome, p.pro_tipo
     FROM dia_cardapioDia d
     JOIN pro_produto p ON d.pro_fk = p.pro_id
-    WHERE d.car_fk = ?
+    JOIN car_cardapio c ON d.car_fk = c.car_id
+    WHERE c.car_data = ?
   `;
 
-  db.query(q, [car_fk], (err, data) => {
-    if (err) return res.json(err);
+  db.query(q, [data], (err, result) => {
+    if (err) {
+      console.error("Erro ao buscar cardápio:", err);
+      return res.status(500).json({ error: "Erro ao buscar cardápio." });
+    }
 
-    res.status(200).json(data);
+    return res.status(200).json(result);
   });
 };
 
-export const addItemToCardapio = (req, res) => {
-  const q = "INSERT INTO dia_cardapioDia (pro_fk, car_fk) VALUES (?, ?)";
+// POST/PUT - Cria ou atualiza cardápio
+export const saveOrUpdateCardapio = (req, res) => {
+  const data = req.body.data;
+  const produtos = req.body.produtos; // Array de objetos com pro_id e pro_tipo
 
-  db.query(q, [req.body.pro_fk, req.body.car_fk], (err, result) => {
-    if (err) return res.json(err);
+  if (!data || !produtos || !Array.isArray(produtos)) {
+    return res.status(400).json({ error: "Dados inválidos." });
+  }
 
-    res.status(200).json({ dia_id: result.insertId, ...req.body });
-  });
-};
+  const selectCardapio = "SELECT car_id FROM car_cardapio WHERE car_data = ?";
+  db.query(selectCardapio, [data], (err, result) => {
+    if (err) return res.status(500).json(err);
 
-export const removeItemFromCardapio = (req, res) => {
-  const q = "DELETE FROM dia_cardapioDia WHERE dia_id = ?";
+    const car_id = result[0]?.car_id;
 
-  db.query(q, [req.params.id], (err) => {
-    if (err) return res.json(err);
+    if (car_id) {
+      // Atualiza: remove os antigos e insere os novos
+      const deleteItens = "DELETE FROM dia_cardapioDia WHERE car_fk = ?";
+      db.query(deleteItens, [car_id], (err) => {
+        if (err) return res.status(500).json(err);
 
-    res.status(204).send();
+        const insertItens = "INSERT INTO dia_cardapioDia (pro_fk, car_fk) VALUES ?";
+        const values = produtos.map((p) => [p.pro_id, car_id]);
+
+        db.query(insertItens, [values], (err) => {
+          if (err) return res.status(500).json(err);
+
+          return res.status(200).json({ message: "Cardápio atualizado com sucesso!" });
+        });
+      });
+
+    } else {
+      // Cria novo cardápio
+      const insertCardapio = "INSERT INTO car_cardapio (car_data) VALUES (?)";
+      db.query(insertCardapio, [data], (err, result) => {
+        if (err) return res.status(500).json(err);
+
+        const novoCarId = result.insertId;
+        const insertItens = "INSERT INTO dia_cardapioDia (pro_fk, car_fk) VALUES ?";
+        const values = produtos.map((p) => [p.pro_id, novoCarId]);
+
+        db.query(insertItens, [values], (err) => {
+          if (err) return res.status(500).json(err);
+
+          return res.status(200).json({ message: "Cardápio criado com sucesso!" });
+        });
+      });
+    }
   });
 };
