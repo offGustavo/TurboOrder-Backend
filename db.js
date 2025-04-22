@@ -1,13 +1,18 @@
 import mysql from "mysql";
 
-export const db = mysql.createConnection({
-    host: "localhost",
-    user: "turboOrder",
-    password: "turboOrder",
-    database: "turboOrder"
+const db = mysql.createConnection({
+  host: "localhost",
+  user: "root",
+  password: "senha",
+  database: "turboorder"
 });
 
-// CREATE USER 'turboOrder'@'localhost' IDENTIFIED BY 'turboOrder';
-// GRANT ALL PRIVILEGES ON turboOrder.* TO 'turboOrder'@'localhost';
-// CREATE TABLE turboOrder;
-// USE turboOrder;
+db.connect((err) => {
+  if (err) {
+    console.error("Erro ao conectar no MySQL:", err);
+    return;
+  }
+  console.log("Conexão com o MySQL bem-sucedida!");
+});
+
+export { db };
