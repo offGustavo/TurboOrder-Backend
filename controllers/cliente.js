@@ -5,7 +5,7 @@ export const getClient = (_, res) => {
         SELECT 
             cli.cli_id, cli.cli_nome, cli.cli_sobrenome, 
             con.con_telefone, 
-            end.end_cep AS cli_cep, end.end_rua AS cli_endereco, end.end_bairro AS cli_bairro, end.end_cidade AS cli_cidade,
+            end.end_cep AS cli_cep, end.end_rua AS cli_rua, end.end_bairro AS cli_bairro, end.end_cidade AS cli_cidade,
             cli.cli_numero, cli.cli_complemento
         FROM cli_cliente cli
         JOIN con_contato con ON cli.contato_fk = con.con_id
