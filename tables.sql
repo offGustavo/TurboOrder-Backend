@@ -1,3 +1,7 @@
+-- ALTER TABLE end_endereco MODIFY COLUMN end_cep VARCHAR(10);
+--
+-- ALTER TABLE end_endereco MODIFY COLUMN end_cep VARCHAR(10);
+
 -- pro_produto
 CREATE TABLE pro_produto ( pro_id INT PRIMARY KEY AUTO_INCREMENT, pro_nome VARCHAR(255), pro_tipo VARCHAR(255), pro_ativo boolean);
 
