@@ -98,7 +98,7 @@ CREATE TABLE ped_pedido (
     ped_valor FLOAT NOT NULL,
     ped_data DATE NOT NULL,
     ped_tipoPagamento VARCHAR(50),
-    is_deletado BOOLEAN NOT NULL DEFAULT FALSE:
+    ped_desativado BOOLEAN NOT NULL DEFAULT FALSE:
     FOREIGN KEY (cliente_fk) REFERENCES cli_cliente(cli_id),
     FOREIGN KEY (funcionario_fk) REFERENCES fun_funcionario(fun_id)
 );
