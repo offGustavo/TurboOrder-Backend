@@ -61,6 +61,11 @@ export const createPedido = (req, res) => {
   });
 };
 
+// TODO: Finalizar soma dos pedidos mensais aqui
+export const getMounthSum = () => {
+
+};
+
 // Buscar todos os pedidos com status e informações do cliente
 export const getPedidos = (req, res) => {
   const q = `
