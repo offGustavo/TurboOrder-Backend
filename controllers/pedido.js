@@ -65,6 +65,7 @@ export const createPedido = (req, res) => {
 export const getPedidos = (req, res) => {
   const q = `
         SELECT p.ped_id, p.ped_status, p.ped_valor, p.ped_data, p.ped_tipoPagamento,
+               p.ped_desativado, p.ped_ordem_dia,
                c.cli_nome, c.cli_sobrenome,
                f.fun_nome,
                i.*
