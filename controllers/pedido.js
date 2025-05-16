@@ -1,47 +1,69 @@
 import { db } from "../db.js";
 
-// Criar um novo pedido
 export const createPedido = (req, res) => {
-    const { cliente_fk, funcionario_fk, itens, ped_status, ped_valor, ped_data, ped_tipoPagamento } = req.body;
+  const { cliente_fk, funcionario_fk, itens, ped_status, ped_valor, ped_data, ped_tipoPagamento, ped_desativado = 0 } = req.body;
 
-    if (!cliente_fk || !funcionario_fk || !itens || !ped_status || !ped_valor || !ped_data || !ped_tipoPagamento) {
-        return res.status(400).json({ error: "Todos os campos são obrigatórios." });
-    }
+  if (!cliente_fk || !funcionario_fk || !itens || !ped_status || !ped_valor || !ped_data || !ped_tipoPagamento) {
+    return res.status(400).json({ error: "Todos os campos obrigatórios devem ser preenchidos." });
+  }
 
-    const insertItensQuery = `
+  const insertItensQuery = `
         INSERT INTO ite_itens (arroz_fk, feijao_fk, massa_fk, salada_fk, acompanhamento_fk, carne01_fk, carne02_fk)
         VALUES (?, ?, ?, ?, ?, ?, ?)
     `;
 
-    const { arroz_fk, feijao_fk, massa_fk, salada_fk, acompanhamento_fk, carne01_fk, carne02_fk } = itens;
+  const { arroz_fk, feijao_fk, massa_fk, salada_fk, acompanhamento_fk, carne01_fk, carne02_fk } = itens;
 
-    db.query(insertItensQuery, [arroz_fk, feijao_fk, massa_fk, salada_fk, acompanhamento_fk, carne01_fk, carne02_fk], (err, result) => {
-        if (err) {
-            console.error("Erro ao inserir itens do pedido:", err);
-            return res.status(500).json({ error: "Erro ao cadastrar itens do pedido." });
-        }
+  db.query(insertItensQuery, [arroz_fk, feijao_fk, massa_fk, salada_fk, acompanhamento_fk, carne01_fk, carne02_fk], (err, result) => {
+    if (err) {
+      console.error("Erro ao inserir itens do pedido:", err);
+      return res.status(500).json({ error: "Erro ao cadastrar itens do pedido." });
+    }
 
-        const ite_fk = result.insertId;
+    const ite_fk = result.insertId;
 
-        const insertPedidoQuery = `
-            INSERT INTO ped_pedido (cliente_fk, funcionario_fk, ite_fk, ped_status, ped_valor, ped_data, ped_tipoPagamento)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+    const getOrdemQuery = `
+            SELECT COUNT(*) AS ordem FROM ped_pedido WHERE ped_data = ?
         `;
 
-        db.query(insertPedidoQuery, [cliente_fk, funcionario_fk, ite_fk, ped_status, ped_valor, ped_data, ped_tipoPagamento], (err2, result2) => {
-            if (err2) {
-                console.error("Erro ao inserir pedido:", err2);
-                return res.status(500).json({ error: "Erro ao cadastrar pedido." });
-            }
+    db.query(getOrdemQuery, [ped_data], (err3, result3) => {
+      if (err3) {
+        console.error("Erro ao calcular ped_ordem_dia:", err3);
+        return res.status(500).json({ error: "Erro ao calcular ordem do pedido." });
+      }
 
-            return res.status(201).json({ message: "Pedido cadastrado com sucesso!", pedidoId: result2.insertId });
+      const ped_ordem_dia = result3[0].ordem + 1;
+
+      const insertPedidoQuery = `
+                INSERT INTO ped_pedido (
+                    cliente_fk, funcionario_fk, ite_fk, ped_status, ped_valor, ped_data, ped_tipoPagamento,
+                    ped_desativado, ped_ordem_dia
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `;
+
+      db.query(insertPedidoQuery, [
+        cliente_fk, funcionario_fk, ite_fk, ped_status, ped_valor, ped_data, ped_tipoPagamento,
+        ped_desativado, ped_ordem_dia
+      ], (err2, result2) => {
+        if (err2) {
+          console.error("Erro ao inserir pedido:", err2);
+          return res.status(500).json({ error: "Erro ao cadastrar pedido." });
+        }
+
+        return res.status(201).json({
+          message: "Pedido cadastrado com sucesso!",
+          pedidoId: result2.insertId,
+          ordem_dia: ped_ordem_dia
         });
+      });
     });
+  });
 };
 
 // Buscar todos os pedidos com status e informações do cliente
 export const getPedidos = (req, res) => {
-    const q = `
+  const q = `
         SELECT p.ped_id, p.ped_status, p.ped_valor, p.ped_data, p.ped_tipoPagamento,
                c.cli_nome, c.cli_sobrenome,
                f.fun_nome,
@@ -53,12 +75,12 @@ export const getPedidos = (req, res) => {
         ORDER BY p.ped_data DESC
     `;
 
-    db.query(q, (err, data) => {
-        if (err) {
-            console.error("Erro ao buscar pedidos:", err);
-            return res.status(500).json({ error: "Erro ao buscar pedidos." });
-        }
+  db.query(q, (err, data) => {
+    if (err) {
+      console.error("Erro ao buscar pedidos:", err);
+      return res.status(500).json({ error: "Erro ao buscar pedidos." });
+    }
 
-        return res.status(200).json(data);
-    });
+    return res.status(200).json(data);
+  });
 };
