@@ -98,11 +98,16 @@ CREATE TABLE ped_pedido (
     ped_valor FLOAT NOT NULL,
     ped_data DATE NOT NULL,
     ped_tipoPagamento VARCHAR(50),
-    ped_desativado BOOLEAN NOT NULL DEFAULT FALSE:
+    ped_observacao TINYTEXT NULL,
+    ped_desativado BOOLEAN NOT NULL DEFAULT FALSE,
+    ped_ordem_dia INT NOT NULL DEFAULT 0,
     FOREIGN KEY (cliente_fk) REFERENCES cli_cliente(cli_id),
     FOREIGN KEY (funcionario_fk) REFERENCES fun_funcionario(fun_id)
 );
 
+-- ALTER TABLE ped_pedido ADD COLUMN ordem_dia INT NOT NULL DEFAULT 0;
+--
+-- ALTER TABLE ped_pedido CHANGE COLUMN ordem_dia ped_ordem_dia INT NOT NULL DEFAULT 0;
 
 
 CREATE TABLE pro_produto (
