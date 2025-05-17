@@ -1,18 +1,36 @@
 import { db } from "../db.js";
 
 export const createPedido = (req, res) => {
-  const { cliente_fk, funcionario_fk, itens, ped_status, ped_valor, ped_data, ped_tipoPagamento, ped_desativado = 0 } = req.body;
+  const {
+    cliente_fk,
+    funcionario_fk,
+    itens,
+    ped_status,
+    ped_valor,
+    ped_data,
+    ped_tipoPagamento,
+    ped_observacao = null,
+    ped_desativado = 0
+  } = req.body;
 
   if (!cliente_fk || !funcionario_fk || !itens || !ped_status || !ped_valor || !ped_data || !ped_tipoPagamento) {
     return res.status(400).json({ error: "Todos os campos obrigatórios devem ser preenchidos." });
   }
 
   const insertItensQuery = `
-        INSERT INTO ite_itens (arroz_fk, feijao_fk, massa_fk, salada_fk, acompanhamento_fk, carne01_fk, carne02_fk)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-    `;
+    INSERT INTO ite_itens (arroz_fk, feijao_fk, massa_fk, salada_fk, acompanhamento_fk, carne01_fk, carne02_fk)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `;
 
-  const { arroz_fk, feijao_fk, massa_fk, salada_fk, acompanhamento_fk, carne01_fk, carne02_fk } = itens;
+  const {
+    arroz_fk,
+    feijao_fk,
+    massa_fk,
+    salada_fk,
+    acompanhamento_fk,
+    carne01_fk,
+    carne02_fk
+  } = itens;
 
   db.query(insertItensQuery, [arroz_fk, feijao_fk, massa_fk, salada_fk, acompanhamento_fk, carne01_fk, carne02_fk], (err, result) => {
     if (err) {
@@ -23,8 +41,8 @@ export const createPedido = (req, res) => {
     const ite_fk = result.insertId;
 
     const getOrdemQuery = `
-            SELECT COUNT(*) AS ordem FROM ped_pedido WHERE ped_data = ?
-        `;
+      SELECT COUNT(*) AS ordem FROM ped_pedido WHERE ped_data = ?
+    `;
 
     db.query(getOrdemQuery, [ped_data], (err3, result3) => {
       if (err3) {
@@ -35,16 +53,24 @@ export const createPedido = (req, res) => {
       const ped_ordem_dia = result3[0].ordem + 1;
 
       const insertPedidoQuery = `
-                INSERT INTO ped_pedido (
-                    cliente_fk, funcionario_fk, ite_fk, ped_status, ped_valor, ped_data, ped_tipoPagamento,
-                    ped_desativado, ped_ordem_dia
-                )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            `;
+        INSERT INTO ped_pedido (
+          cliente_fk, funcionario_fk, ite_fk, ped_status, ped_valor, ped_data, ped_tipoPagamento,
+          ped_observacao, ped_desativado, ped_ordem_dia
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `;
 
       db.query(insertPedidoQuery, [
-        cliente_fk, funcionario_fk, ite_fk, ped_status, ped_valor, ped_data, ped_tipoPagamento,
-        ped_desativado, ped_ordem_dia
+        cliente_fk,
+        funcionario_fk,
+        ite_fk,
+        ped_status,
+        ped_valor,
+        ped_data,
+        ped_tipoPagamento,
+        ped_observacao,
+        ped_desativado,
+        ped_ordem_dia
       ], (err2, result2) => {
         if (err2) {
           console.error("Erro ao inserir pedido:", err2);
@@ -63,7 +89,6 @@ export const createPedido = (req, res) => {
 
 // TODO: Finalizar soma dos pedidos mensais aqui
 export const getMounthSum = () => {
-
 };
 
 // Buscar todos os pedidos com status e informações do cliente
@@ -88,5 +113,29 @@ export const getPedidos = (req, res) => {
     }
 
     return res.status(200).json(data);
+  });
+};
+
+export const updatePedidoStatus = (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  if (!status) {
+    return res.status(400).json({ error: "O novo status é obrigatório." });
+  }
+
+  const query = "UPDATE ped_pedido p SET p.ped_status = ? WHERE p.ped_id = ?";
+
+  db.query(query, [status, id], (err, result) => {
+    if (err) {
+      console.error("Erro ao atualizar status do pedido:", err);
+      return res.status(500).json({ error: "Erro ao atualizar status do pedido." });
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Pedido não encontrado." });
+    }
+
+    return res.status(200).json({ message: "Status do pedido atualizado com sucesso!" });
   });
 };
