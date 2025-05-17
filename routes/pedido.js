@@ -5,6 +5,6 @@ const router = express.Router();
 
 router.post("/", createPedido);
 router.get("/", getPedidos);
-router.put('/:id/status', updatePedidoStatus);
+router.put('/:id', updatePedidoStatus);
 
 export default router;
