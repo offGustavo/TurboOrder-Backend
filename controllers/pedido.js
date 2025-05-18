@@ -9,6 +9,7 @@ export const createPedido = (req, res) => {
     ped_valor,
     ped_data,
     ped_tipoPagamento,
+    ped_horarioRetirada,
     ped_observacao = null,
     ped_desativado = 0
   } = req.body;
@@ -32,7 +33,15 @@ export const createPedido = (req, res) => {
     carne02_fk
   } = itens;
 
-  db.query(insertItensQuery, [arroz_fk, feijao_fk, massa_fk, salada_fk, acompanhamento_fk, carne01_fk, carne02_fk], (err, result) => {
+  db.query(insertItensQuery, [
+    arroz_fk || null,
+    feijao_fk || null,
+    massa_fk || null,
+    salada_fk || null,
+    acompanhamento_fk || null,
+    carne01_fk || null,
+    carne02_fk || null
+  ], (err, result) => {
     if (err) {
       console.error("Erro ao inserir itens do pedido:", err);
       return res.status(500).json({ error: "Erro ao cadastrar itens do pedido." });
@@ -40,9 +49,7 @@ export const createPedido = (req, res) => {
 
     const ite_fk = result.insertId;
 
-    const getOrdemQuery = `
-      SELECT COUNT(*) AS ordem FROM ped_pedido WHERE ped_data = ?
-    `;
+    const getOrdemQuery = `SELECT COUNT(*) AS ordem FROM ped_pedido WHERE ped_data = ?`;
 
     db.query(getOrdemQuery, [ped_data], (err3, result3) => {
       if (err3) {
@@ -51,13 +58,14 @@ export const createPedido = (req, res) => {
       }
 
       const ped_ordem_dia = result3[0].ordem + 1;
+      const horarioRetirada = ped_horarioRetirada && ped_horarioRetirada.trim() !== '' ? ped_horarioRetirada : null;
 
       const insertPedidoQuery = `
         INSERT INTO ped_pedido (
-          cliente_fk, funcionario_fk, ite_fk, ped_status, ped_valor, ped_data, ped_tipoPagamento,
-          ped_observacao, ped_desativado, ped_ordem_dia
+          cliente_fk, funcionario_fk, ite_fk, ped_status, ped_valor, ped_data,
+          ped_tipoPagamento, ped_observacao, ped_desativado, ped_ordem_dia, ped_horarioRetirada
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `;
 
       db.query(insertPedidoQuery, [
@@ -70,7 +78,8 @@ export const createPedido = (req, res) => {
         ped_tipoPagamento,
         ped_observacao,
         ped_desativado,
-        ped_ordem_dia
+        ped_ordem_dia,
+        horarioRetirada
       ], (err2, result2) => {
         if (err2) {
           console.error("Erro ao inserir pedido:", err2);
@@ -85,7 +94,7 @@ export const createPedido = (req, res) => {
       });
     });
   });
-};
+}
 
 // TODO: Finalizar soma dos pedidos mensais aqui
 export const getMounthSum = () => {
