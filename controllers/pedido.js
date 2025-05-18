@@ -137,7 +137,7 @@ export const editPedidos = (req, res) => {
     ped_valor,
     ped_data,
     ped_tipoPagamento,
-    ped_observacao = null,
+    ped_observacao,
     ped_desativado = 0
   } = req.body;
 
@@ -166,7 +166,15 @@ export const editPedidos = (req, res) => {
       acompanhamento_fk,
       carne01_fk,
       carne02_fk
-    } = itens;
+    } = {
+      arroz_fk: itens.arroz_fk === '' ? null : itens.arroz_fk,
+      feijao_fk: itens.feijao_fk === '' ? null : itens.feijao_fk,
+      massa_fk: itens.massa_fk === '' ? null : itens.massa_fk,
+      salada_fk: itens.salada_fk === '' ? null : itens.salada_fk,
+      acompanhamento_fk: itens.acompanhamento_fk === '' ? null : itens.acompanhamento_fk,
+      carne01_fk: itens.carne01_fk === '' ? null : itens.carne01_fk,
+      carne02_fk: itens.carne02_fk === '' ? null : itens.carne02_fk,
+    };
 
     const updateItensQuery = `
       UPDATE ite_itens
