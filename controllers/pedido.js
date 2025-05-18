@@ -146,6 +146,7 @@ export const editPedidos = (req, res) => {
     ped_valor,
     ped_data,
     ped_tipoPagamento,
+    ped_horarioRetirada,
     ped_observacao,
     ped_desativado = 0
   } = req.body;
@@ -200,7 +201,7 @@ export const editPedidos = (req, res) => {
       const updatePedidoQuery = `
         UPDATE ped_pedido
         SET cliente_fk = ?, funcionario_fk = ?, ped_status = ?, ped_valor = ?, ped_data = ?, ped_tipoPagamento = ?,
-            ped_observacao = ?, ped_desativado = ?
+            ped_observacao = ?, ped_desativado = ?, ped_horarioRetirada = ?
         WHERE ped_id = ?
       `;
 
@@ -213,6 +214,7 @@ export const editPedidos = (req, res) => {
         ped_tipoPagamento,
         ped_observacao,
         ped_desativado,
+        ped_horarioRetirada,
         id
       ], (err3, result3) => {
         if (err3) {
