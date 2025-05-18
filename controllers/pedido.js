@@ -92,9 +92,20 @@ export const getMounthSum = () => {
 };
 
 export const getPedidos = (req, res) => {
+
+  // const q = `
+  //       SELECT p.ped_id, p.ped_status, p.ped_valor, p.ped_data, p.ped_tipoPagamento,
+  //              p.ped_desativado, p.ped_ordem_dia, p.ped_observacao,
+  //              c.cli_nome, c.cli_sobrenome,
+  //              f.fun_nome,
+  //              i.*
+  //       FROM ped_pedido p
+  //       JOIN cli_cliente c ON p.cliente_fk = c.cli_id
+  //       JOIN fun_funcionario f ON p.funcionario_fk = f.fun_id
+  //       JOIN ite_itens i ON p.ite_fk = i.ite_id
+  //   `;
   const q = `
-        SELECT p.ped_id, p.ped_status, p.ped_valor, p.ped_data, p.ped_tipoPagamento,
-               p.ped_desativado, p.ped_ordem_dia,
+        SELECT p.*,
                c.cli_nome, c.cli_sobrenome,
                f.fun_nome,
                i.*
@@ -111,6 +122,92 @@ export const getPedidos = (req, res) => {
     }
 
     return res.status(200).json(data);
+  });
+};
+
+export const editPedidos = (req, res) => {
+  const { id } = req.params;
+  const {
+    cliente_fk,
+    funcionario_fk,
+    itens,
+    ped_status,
+    ped_valor,
+    ped_data,
+    ped_tipoPagamento,
+    ped_observacao = null,
+    ped_desativado = 0
+  } = req.body;
+
+  if (!cliente_fk || !funcionario_fk || !itens || !ped_status || !ped_valor || !ped_data || !ped_tipoPagamento) {
+    return res.status(400).json({ error: "Todos os campos obrigatórios devem ser preenchidos." });
+  }
+
+  const getIteFkQuery = "SELECT ite_fk FROM ped_pedido WHERE ped_id = ?";
+  db.query(getIteFkQuery, [id], (err, result) => {
+    if (err) {
+      console.error("Erro ao buscar itens do pedido:", err);
+      return res.status(500).json({ error: "Erro ao buscar itens do pedido." });
+    }
+
+    if (result.length === 0) {
+      return res.status(404).json({ error: "Pedido não encontrado." });
+    }
+
+    const ite_fk = result[0].ite_fk;
+
+    const {
+      arroz_fk,
+      feijao_fk,
+      massa_fk,
+      salada_fk,
+      acompanhamento_fk,
+      carne01_fk,
+      carne02_fk
+    } = itens;
+
+    const updateItensQuery = `
+      UPDATE ite_itens
+      SET arroz_fk = ?, feijao_fk = ?, massa_fk = ?, salada_fk = ?, acompanhamento_fk = ?, carne01_fk = ?, carne02_fk = ?
+      WHERE ite_id = ?
+    `;
+
+    db.query(updateItensQuery, [arroz_fk, feijao_fk, massa_fk, salada_fk, acompanhamento_fk, carne01_fk, carne02_fk, ite_fk], (err2) => {
+      if (err2) {
+        console.error("Erro ao atualizar itens do pedido:", err2);
+        return res.status(500).json({ error: "Erro ao atualizar itens do pedido." });
+      }
+
+      const updatePedidoQuery = `
+        UPDATE ped_pedido
+        SET cliente_fk = ?, funcionario_fk = ?, ped_status = ?, ped_valor = ?, ped_data = ?, ped_tipoPagamento = ?,
+            ped_observacao = ?, ped_desativado = ?
+        WHERE ped_id = ?
+      `;
+
+      db.query(updatePedidoQuery, [
+        cliente_fk,
+        funcionario_fk,
+        ped_status,
+        ped_valor,
+        ped_data,
+        ped_tipoPagamento,
+        ped_observacao,
+        ped_desativado,
+        id
+      ], (err3, result3) => {
+        if (err3) {
+          console.error("Erro ao atualizar pedido:", err3);
+          return res.status(500).json({ error: "Erro ao atualizar pedido." });
+        }
+
+        if (result3.affectedRows === 0) {
+          return res.status(404).json({ error: "Pedido não encontrado para atualização." });
+        }
+
+        return res.status(200).json({ message: "Pedido atualizado com sucesso!" });
+      });
+    });
   });
 };
 
