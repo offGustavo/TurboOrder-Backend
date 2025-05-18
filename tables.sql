@@ -111,6 +111,9 @@ CREATE TABLE ped_pedido (
 
 -- ALTER TABLE ped_pedido CHANGE COLUMN ordem_dia ped_ordem_dia INT NOT NULL DEFAULT 0;
 
+-- TODO: MODIFICAR BANCO
+-- ALTER TABLE ped_pedido ADD COLUMN ped_isEntrega TINYINT(1) NOT NULL DEFAULT 0, ADD COLUMN ped_horarioRetirada TIME DEFAULT NULL;
+
 
 CREATE TABLE pro_produto (
     pro_id INT PRIMARY KEY AUTO_INCREMENT,
