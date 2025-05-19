@@ -11,7 +11,7 @@ export const createPedido = (req, res) => {
     ped_tipoPagamento,
     ped_horarioRetirada,
     ped_observacao,
-    ped_desativado
+    ped_desativado = 0
   } = req.body;
 
   if (!cliente_fk || !funcionario_fk || !itens || !ped_status || !ped_valor || !ped_data || !ped_tipoPagamento) {
@@ -200,7 +200,7 @@ export const editPedidos = (req, res) => {
       }
 
 
-
+      const horarioRetiradaTratado = ped_horarioRetirada === '' ? null : ped_horarioRetirada;
 
       const updatePedidoQuery = `
         UPDATE ped_pedido
@@ -218,7 +218,7 @@ export const editPedidos = (req, res) => {
         ped_tipoPagamento,
         ped_observacao,
         ped_desativado,
-        ped_horarioRetirada,
+        horarioRetiradaTratado,
         id
       ], (err3, result3) => {
         if (err3) {
