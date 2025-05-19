@@ -96,7 +96,6 @@ export const createPedido = (req, res) => {
   });
 }
 
-
 export const getMounthSum = (req, res) => {
   const last30DaysQuery = `
     SELECT 
