@@ -8,6 +8,6 @@ router.get("/", getPedidos);
 router.put('/:id', editPedidos)
 router.put('/:id/status', updatePedidoStatus);
 router.get('/soma-mensal', getMounthSum)
-router.get("/filtred", getFiltredPedidos());
+router.get("/filtred", getFiltredPedidos);
 
 export default router;
