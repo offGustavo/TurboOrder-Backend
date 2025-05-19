@@ -1,42 +1,42 @@
--- ALTER TABLE end_endereco MODIFY COLUMN end_cep VARCHAR(10);
+-- -- ALTER TABLE end_endereco MODIFY COLUMN end_cep VARCHAR(10);
+-- --
+-- -- ALTER TABLE end_endereco MODIFY COLUMN end_cep VARCHAR(10);
 --
--- ALTER TABLE end_endereco MODIFY COLUMN end_cep VARCHAR(10);
-
--- pro_produto
-CREATE TABLE pro_produto ( pro_id INT PRIMARY KEY AUTO_INCREMENT, pro_nome VARCHAR(255), pro_tipo VARCHAR(255), pro_ativo boolean);
-
-INSERT INTO pro_produto (pro_id, pro_nome, pro_tipo, pro_ativo) VALUES 
-(1, 'Arroz Branco', 'Arroz', true),
-(2, 'Feijão Preto', 'Feijão', true),
-(3, 'Macarrão Espaguete', 'Massa', true),
-(4, 'Carne Bovina', 'Carne', true),
-(5, 'Farofa de Bacon', 'Acompanhamento', true),
-(6, 'Salada Mista', 'Salada', true),
-(7, 'Arroz Integral', 'Arroz', false),
-(8, 'Feijão Carioca', 'Feijão', true),
-(9, 'Lasanha', 'Massa', false),
-(10, 'Frango Grelhado', 'Carne', true);
-
--- car_cardapio
-create table car_cardapio( car_id int primary key, car_data date);
-
--- Cria a tabela de Cardápio do Dia
-create table dia_cardapioDia( dia_id int primary key, pro_fk int, car_fk int, FOREIGN KEY (pro_fk) REFERENCES pro_produto(pro_id), FOREIGN KEY (car_fk) REFERENCES car_cardapio(car_id));
-
---  Cria a tabela itens do pedido
-create table ite_itens ( ite_id int primary key, arroz_fk int, feijao_fk int, massa_fk int, salada_fk int, acomapanhamento_fk int, carne01_fk int, carne02_fk int, FOREIGN KEY (arroz_fk) REFERENCES dia_cardapioDia(dia_id), FOREIGN KEY (feijao_fk) REFERENCES dia_cardapioDia(dia_id), FOREIGN KEY (massa_fk) REFERENCES dia_cardapioDia(dia_id), FOREIGN KEY (salada_fk) REFERENCES dia_cardapioDia(dia_id), FOREIGN KEY (acomapanhamento_fk) REFERENCES dia_cardapioDia(dia_id), FOREIGN KEY (carne01_fk) REFERENCES dia_cardapioDia(dia_id), FOREIGN KEY (carne02_fk) REFERENCES dia_cardapioDia(dia_id));
-
--- Inserindo dados na tabela pro_produto
-INSERT INTO pro_produto (pro_id, pro_titulo, pro_tipo) VALUES (1, 'Arroz', 'grão'), (2, 'Feijão', 'grão'), (3, 'Macarrão', 'massa');
-
--- Inserindo dados na tabela car_cardapio
-INSERT INTO car_cardapio (car_id, car_data) VALUES (1, '2024-10-23'), (2, '2024-10-24'), (3, '2024-10-25');
-
--- Inserindo dados na tabela dia_cardapioDia
-INSERT INTO dia_cardapioDia (dia_id, pro_fk, car_fk) VALUES (5, 1, 2), (6, 3, 2), (7, 4, 2);
-
-SELECT p.pro_id, p.pro_titulo, p.pro_tipo, c.car_data FROM pro_produto p JOIN dia_cardapioDia d ON p.pro_id = d.pro_fk JOIN car_cardapio c ON d.car_fk = c.car_id;
-
+-- -- pro_produto
+-- CREATE TABLE pro_produto ( pro_id INT PRIMARY KEY AUTO_INCREMENT, pro_nome VARCHAR(255), pro_tipo VARCHAR(255), pro_ativo boolean);
+--
+-- INSERT INTO pro_produto (pro_id, pro_nome, pro_tipo, pro_ativo) VALUES 
+-- (1, 'Arroz Branco', 'Arroz', true),
+-- (2, 'Feijão Preto', 'Feijão', true),
+-- (3, 'Macarrão Espaguete', 'Massa', true),
+-- (4, 'Carne Bovina', 'Carne', true),
+-- (5, 'Farofa de Bacon', 'Acompanhamento', true),
+-- (6, 'Salada Mista', 'Salada', true),
+-- (7, 'Arroz Integral', 'Arroz', false),
+-- (8, 'Feijão Carioca', 'Feijão', true),
+-- (9, 'Lasanha', 'Massa', false),
+-- (10, 'Frango Grelhado', 'Carne', true);
+--
+-- -- car_cardapio
+-- create table car_cardapio( car_id int primary key, car_data date);
+--
+-- -- Cria a tabela de Cardápio do Dia
+-- create table dia_cardapioDia( dia_id int primary key, pro_fk int, car_fk int, FOREIGN KEY (pro_fk) REFERENCES pro_produto(pro_id), FOREIGN KEY (car_fk) REFERENCES car_cardapio(car_id));
+--
+-- --  Cria a tabela itens do pedido
+-- create table ite_itens ( ite_id int primary key, arroz_fk int, feijao_fk int, massa_fk int, salada_fk int, acomapanhamento_fk int, carne01_fk int, carne02_fk int, FOREIGN KEY (arroz_fk) REFERENCES dia_cardapioDia(dia_id), FOREIGN KEY (feijao_fk) REFERENCES dia_cardapioDia(dia_id), FOREIGN KEY (massa_fk) REFERENCES dia_cardapioDia(dia_id), FOREIGN KEY (salada_fk) REFERENCES dia_cardapioDia(dia_id), FOREIGN KEY (acomapanhamento_fk) REFERENCES dia_cardapioDia(dia_id), FOREIGN KEY (carne01_fk) REFERENCES dia_cardapioDia(dia_id), FOREIGN KEY (carne02_fk) REFERENCES dia_cardapioDia(dia_id));
+--
+-- -- Inserindo dados na tabela pro_produto
+-- INSERT INTO pro_produto (pro_id, pro_titulo, pro_tipo) VALUES (1, 'Arroz', 'grão'), (2, 'Feijão', 'grão'), (3, 'Macarrão', 'massa');
+--
+-- -- Inserindo dados na tabela car_cardapio
+-- INSERT INTO car_cardapio (car_id, car_data) VALUES (1, '2024-10-23'), (2, '2024-10-24'), (3, '2024-10-25');
+--
+-- -- Inserindo dados na tabela dia_cardapioDia
+-- INSERT INTO dia_cardapioDia (dia_id, pro_fk, car_fk) VALUES (5, 1, 2), (6, 3, 2), (7, 4, 2);
+--
+-- SELECT p.pro_id, p.pro_titulo, p.pro_tipo, c.car_data FROM pro_produto p JOIN dia_cardapioDia d ON p.pro_id = d.pro_fk JOIN car_cardapio c ON d.car_fk = c.car_id;
+--
 
 -- GPT
 --
