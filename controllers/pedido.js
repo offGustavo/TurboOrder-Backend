@@ -103,17 +103,6 @@ export const getMounthSum = () => {
 // Buscar todos os pedidos com status e informações do cliente
 export const getPedidos = (req, res) => {
 
-  // const q = `
-  //       SELECT p.ped_id, p.ped_status, p.ped_valor, p.ped_data, p.ped_tipoPagamento,
-  //              p.ped_desativado, p.ped_ordem_dia, p.ped_observacao,
-  //              c.cli_nome, c.cli_sobrenome,
-  //              f.fun_nome,
-  //              i.*
-  //       FROM ped_pedido p
-  //       JOIN cli_cliente c ON p.cliente_fk = c.cli_id
-  //       JOIN fun_funcionario f ON p.funcionario_fk = f.fun_id
-  //       JOIN ite_itens i ON p.ite_fk = i.ite_id
-  //   `;
   const q = `
         SELECT p.*,
                c.cli_nome, c.cli_sobrenome,
