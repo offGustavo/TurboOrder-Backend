@@ -10,7 +10,7 @@ export const createPedido = (req, res) => {
     ped_data,
     ped_tipoPagamento,
     ped_horarioRetirada,
-    ped_observacao = null,
+    ped_observacao,
     ped_desativado = 0
   } = req.body;
 
@@ -228,11 +228,15 @@ export const editPedidos = (req, res) => {
       WHERE ite_id = ?
     `;
 
+
     db.query(updateItensQuery, [arroz_fk, feijao_fk, massa_fk, salada_fk, acompanhamento_fk, carne01_fk, carne02_fk, ite_fk], (err2) => {
       if (err2) {
         console.error("Erro ao atualizar itens do pedido:", err2);
         return res.status(500).json({ error: "Erro ao atualizar itens do pedido." });
       }
+
+
+      const horarioRetiradaTratado = ped_horarioRetirada === '' ? null : ped_horarioRetirada;
 
       const updatePedidoQuery = `
         UPDATE ped_pedido
@@ -250,7 +254,7 @@ export const editPedidos = (req, res) => {
         ped_tipoPagamento,
         ped_observacao,
         ped_desativado,
-        ped_horarioRetirada,
+        horarioRetiradaTratado,
         id
       ], (err3, result3) => {
         if (err3) {
