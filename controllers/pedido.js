@@ -195,10 +195,34 @@ export const getMounthSum = (req, res) => {
   });
 };
 
-export const getPedidos = (req, res) => {
+export const getFiltredPedidos = (req, res) => {
+
   const { baseQuery, params } = filterOrder(req.query || {});
 
   db.query(baseQuery, params, (err, data) => {
+    if (err) {
+      console.error("Erro ao buscar pedidos:", err);
+      return res.status(500).json({ error: "Erro ao buscar pedidos." });
+    }
+
+    return res.status(200).json(data);
+  });
+};
+
+export const getPedidos = (req, res) => {
+
+  const q = `
+        SELECT p.*,
+               c.cli_nome, c.cli_sobrenome,
+               f.fun_nome,
+               i.*
+        FROM ped_pedido p
+        JOIN cli_cliente c ON p.cliente_fk = c.cli_id
+        JOIN fun_funcionario f ON p.funcionario_fk = f.fun_id
+        JOIN ite_itens i ON p.ite_fk = i.ite_id
+    `;
+
+  db.query(q, (err, data) => {
     if (err) {
       console.error("Erro ao buscar pedidos:", err);
       return res.status(500).json({ error: "Erro ao buscar pedidos." });
