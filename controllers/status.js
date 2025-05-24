@@ -11,7 +11,7 @@ export const getMounthSum = (req, res) => {
     `;
 
   db.query(currentMonthQuery, (err2, result2) => {
-    if (err1) {
+    if (err2) {
       console.error('Erro ao calcular dados do mês atual:', err2);
       return res.status(500).json({ error: 'Erro ao calcular dados do mês atual.' });
     }
