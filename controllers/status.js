@@ -82,3 +82,112 @@ export const getWeekSum = (req, res) => {
     });
   });
 };
+
+export const getProductSales = (req, res) => {
+  const query = `
+    SELECT 
+      p.pro_id,
+      p.pro_nome,
+      COUNT(*) AS quantidadeVendida
+    FROM pro_produto p
+    JOIN (
+      SELECT arroz_fk AS pro_id FROM ite_itens 
+      JOIN ped_pedido ON ped_pedido.ite_fk = ite_itens.ite_id
+      WHERE ped_pedido.ped_status = 'Concluído' AND arroz_fk IS NOT NULL
+      UNION ALL
+      SELECT feijao_fk FROM ite_itens 
+      JOIN ped_pedido ON ped_pedido.ite_fk = ite_itens.ite_id
+      WHERE ped_pedido.ped_status = 'Concluído' AND feijao_fk IS NOT NULL
+      UNION ALL
+      SELECT massa_fk FROM ite_itens 
+      JOIN ped_pedido ON ped_pedido.ite_fk = ite_itens.ite_id
+      WHERE ped_pedido.ped_status = 'Concluído' AND massa_fk IS NOT NULL
+      UNION ALL
+      SELECT salada_fk FROM ite_itens 
+      JOIN ped_pedido ON ped_pedido.ite_fk = ite_itens.ite_id
+      WHERE ped_pedido.ped_status = 'Concluído' AND salada_fk IS NOT NULL
+      UNION ALL
+      SELECT acompanhamento_fk FROM ite_itens 
+      JOIN ped_pedido ON ped_pedido.ite_fk = ite_itens.ite_id
+      WHERE ped_pedido.ped_status = 'Concluído' AND acompanhamento_fk IS NOT NULL
+      UNION ALL
+      SELECT carne01_fk FROM ite_itens 
+      JOIN ped_pedido ON ped_pedido.ite_fk = ite_itens.ite_id
+      WHERE ped_pedido.ped_status = 'Concluído' AND carne01_fk IS NOT NULL
+      UNION ALL
+      SELECT carne02_fk FROM ite_itens 
+      JOIN ped_pedido ON ped_pedido.ite_fk = ite_itens.ite_id
+      WHERE ped_pedido.ped_status = 'Concluído' AND carne02_fk IS NOT NULL
+    ) AS itens ON itens.pro_id = p.pro_id
+    GROUP BY p.pro_id, p.pro_nome
+    ORDER BY quantidadeVendida DESC
+  `;
+
+  db.query(query, (err, result) => {
+    if (err) {
+      console.error('Erro ao calcular quantidade de vendas por produto:', err);
+      return res.status(500).json({ error: 'Erro ao calcular quantidade de vendas por produto.' });
+    }
+
+    return res.status(200).json(result);
+  });
+};
+
+
+export const getProductSalesById = (req, res) => {
+  const productId = req.params.id;
+
+  const query = `
+    SELECT 
+      p.pro_id,
+      p.pro_nome,
+      COUNT(*) AS quantidadeVendida
+    FROM pro_produto p
+    JOIN (
+      SELECT arroz_fk AS pro_id FROM ite_itens 
+      JOIN ped_pedido ON ped_pedido.ite_fk = ite_itens.ite_id
+      WHERE ped_pedido.ped_status = 'Concluído' AND arroz_fk = ?
+      UNION ALL
+      SELECT feijao_fk FROM ite_itens 
+      JOIN ped_pedido ON ped_pedido.ite_fk = ite_itens.ite_id
+      WHERE ped_pedido.ped_status = 'Concluído' AND feijao_fk = ?
+      UNION ALL
+      SELECT massa_fk FROM ite_itens 
+      JOIN ped_pedido ON ped_pedido.ite_fk = ite_itens.ite_id
+      WHERE ped_pedido.ped_status = 'Concluído' AND massa_fk = ?
+      UNION ALL
+      SELECT salada_fk FROM ite_itens 
+      JOIN ped_pedido ON ped_pedido.ite_fk = ite_itens.ite_id
+      WHERE ped_pedido.ped_status = 'Concluído' AND salada_fk = ?
+      UNION ALL
+      SELECT acompanhamento_fk FROM ite_itens 
+      JOIN ped_pedido ON ped_pedido.ite_fk = ite_itens.ite_id
+      WHERE ped_pedido.ped_status = 'Concluído' AND acompanhamento_fk = ?
+      UNION ALL
+      SELECT carne01_fk FROM ite_itens 
+      JOIN ped_pedido ON ped_pedido.ite_fk = ite_itens.ite_id
+      WHERE ped_pedido.ped_status = 'Concluído' AND carne01_fk = ?
+      UNION ALL
+      SELECT carne02_fk FROM ite_itens 
+      JOIN ped_pedido ON ped_pedido.ite_fk = ite_itens.ite_id
+      WHERE ped_pedido.ped_status = 'Concluído' AND carne02_fk = ?
+    ) AS itens ON itens.pro_id = p.pro_id
+    WHERE p.pro_id = ?
+    GROUP BY p.pro_id, p.pro_nome
+  `;
+
+  const params = [productId, productId, productId, productId, productId, productId, productId, productId];
+
+  db.query(query, params, (err, result) => {
+    if (err) {
+      console.error('Erro ao calcular quantidade de vendas do produto:', err);
+      return res.status(500).json({ error: 'Erro ao calcular quantidade de vendas do produto.' });
+    }
+
+    if (result.length === 0) {
+      return res.status(404).json({ message: 'Produto não encontrado ou sem vendas concluídas.' });
+    }
+
+    return res.status(200).json(result[0]);
+  });
+};

@@ -1,9 +1,11 @@
 import express from "express";
-import { getMounthSum, getWeekSum } from "../controllers/status.js";
+import { getMounthSum, getProductSales, getProductSalesById, getWeekSum } from "../controllers/status.js";
 
 const router = express.Router();
 
 router.get('/soma-mensal', getMounthSum);
 router.get('/soma-semanal', getWeekSum);
+router.get('/soma-produto', getProductSales)
+router.get('/soma-produto/:id', getProductSalesById);
 
 export default router;
