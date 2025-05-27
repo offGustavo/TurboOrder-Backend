@@ -83,6 +83,32 @@ export const getWeekSum = (req, res) => {
   });
 };
 
+export const getDaySum = (req, res) => {
+  const { dia_pedido } = req.params;
+
+  const dayQuery = `
+    SELECT 
+      SUM(ped_valor) AS totalDia,
+      COUNT(*) AS quantidadeDia,
+      AVG(ped_valor) AS mediaDia
+    FROM ped_pedido
+    WHERE ped_data = ?;
+  `;
+
+  db.query(dayQuery, [dia_pedido], (err, result) => {
+    if (err) {
+      console.error('Erro ao calcular dados do dia atual:', err);
+      return res.status(500).json({ error: 'Erro ao calcular dados do dia atual.' });
+    }
+
+    return res.status(200).json({
+      totalDia: result[0].totalDia || 0,
+      quantidadeDia: result[0].quantidadeDia || 0,
+      mediaDia: result[0].mediaDia || 0,
+    });
+  });
+};
+
 export const getProductSales = (req, res) => {
   const query = `
     SELECT 
@@ -132,7 +158,6 @@ export const getProductSales = (req, res) => {
     return res.status(200).json(result);
   });
 };
-
 
 export const getProductSalesById = (req, res) => {
   const productId = req.params.id;
