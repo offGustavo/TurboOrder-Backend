@@ -23,8 +23,8 @@ export const loginUser = (req, res) => {
                 }
 
                 if (result) {
-                    const name = data[0].name;
-                    const token = jwt.sign({name}, "jwt-secret-key", {expiresIn: "1d"});
+                    const username = data[0].fun_nome;
+                    const token = jwt.sign({username}, "jwt-secret-key", {expiresIn: "1d"});
                     res.cookie("token", token);
                     return res.json({ Status: "Success"});
                 } else {

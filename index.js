@@ -10,6 +10,7 @@ import pedidoRoutes from "./routes/pedido.js";
 import statusRoutes from "./routes/status.js";
 import registerRoutes from "./routes/register.js";
 import loginRoutes from "./routes/login.js"
+import homeRoutes from "./routes/home.js"
 
 const app = express();
 const PORT = 8800;
@@ -30,6 +31,7 @@ app.use("/pedidos", pedidoRoutes);
 app.use('/status', statusRoutes);
 app.use('/cadastro', registerRoutes);
 app.use('/login', loginRoutes);
+app.use('/', homeRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
