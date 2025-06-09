@@ -33,6 +33,14 @@ export const saveOrUpdateCardapio = (req, res) => {
     return res.status(400).json({ error: "Dados inválidos." });
   }
 
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0); // Zera hora para comparar apenas a data
+  const dataCardapio = new Date(data);
+
+  if (dataCardapio < hoje) {
+    return res.status(403).json({ error: "Não é permitido alterar cardápios de dias passados." });
+  }
+
   const selectCardapio = "SELECT car_id FROM car_cardapio WHERE car_data = ?";
   db.query(selectCardapio, [data], (err, result) => {
     if (err) return res.status(500).json(err);
