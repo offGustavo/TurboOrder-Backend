@@ -25,20 +25,37 @@ export const getCardapioByDate = (req, res) => {
 };
 
 // POST/PUT - Cria ou atualiza cardápio
+
+// NOTE: testar isso, acho que tá bugado
 export const saveOrUpdateCardapio = (req, res) => {
   const data = req.body.data;
-  const produtos = req.body.produtos; // Array de objetos com pro_id e pro_tipo
+  const produtos = req.body.produtos;
 
   if (!data || !produtos || !Array.isArray(produtos)) {
     return res.status(400).json({ error: "Dados inválidos." });
   }
 
-  const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0); // Zera hora para comparar apenas a data
+  const agora = new Date();
   const dataCardapio = new Date(data);
 
-  if (dataCardapio < hoje) {
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const dataSomente = new Date(dataCardapio);
+  dataSomente.setHours(0, 0, 0, 0);
+
+  const HORA_LIMITE = 18;
+
+  if (dataSomente < hoje) {
     return res.status(403).json({ error: "Não é permitido alterar cardápios de dias passados." });
+  }
+
+  const limiteEdicao = new Date(dataCardapio);
+  limiteEdicao.setHours(HORA_LIMITE, 0, 0, 0);
+
+  if (dataSomente.getTime() === hoje.getTime() && agora > limiteEdicao) {
+    return res.status(403).json({
+      error: `O cardápio do dia só pode ser alterado até às ${String(HORA_LIMITE).padStart(2, '0')}:00.`,
+    });
   }
 
   const selectCardapio = "SELECT car_id FROM car_cardapio WHERE car_data = ?";
@@ -48,7 +65,6 @@ export const saveOrUpdateCardapio = (req, res) => {
     const car_id = result[0]?.car_id;
 
     if (car_id) {
-      // Atualiza: remove os antigos e insere os novos
       const deleteItens = "DELETE FROM dia_cardapioDia WHERE car_fk = ?";
       db.query(deleteItens, [car_id], (err) => {
         if (err) return res.status(500).json(err);
@@ -64,7 +80,6 @@ export const saveOrUpdateCardapio = (req, res) => {
       });
 
     } else {
-      // Cria novo cardápio
       const insertCardapio = "INSERT INTO car_cardapio (car_data) VALUES (?)";
       db.query(insertCardapio, [data], (err, result) => {
         if (err) return res.status(500).json(err);
