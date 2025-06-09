@@ -192,6 +192,7 @@ export const getPedidos = (req, res) => {
 };
 
 export const editPedidos = (req, res) => {
+
   const { id } = req.params;
   const {
     cliente_fk,
@@ -297,22 +298,39 @@ export const updatePedidoStatus = (req, res) => {
     return res.status(400).json({ error: "O novo status é obrigatório." });
   }
 
-  const query = "UPDATE ped_pedido p SET p.ped_status = ? WHERE p.ped_id = ?";
+  const selectQuery = "SELECT ped_status, ped_updated_at FROM ped_pedido WHERE ped_id = ?";
 
-  db.query(query, [status, id], (err, result) => {
-    if (err) {
-      console.error("Erro ao atualizar status do pedido:", err);
-      return res
-        .status(500)
-        .json({ error: "Erro ao atualizar status do pedido." });
+  db.query(selectQuery, [id], (selectErr, results) => {
+    if (selectErr) {
+      console.error("Erro ao buscar pedido:", selectErr);
+      return res.status(500).json({ error: "Erro ao buscar pedido." });
     }
 
-    if (result.affectedRows === 0) {
+    if (results.length === 0) {
       return res.status(404).json({ error: "Pedido não encontrado." });
     }
 
-    return res
-      .status(200)
-      .json({ message: "Status do pedido atualizado com sucesso!" });
+    const { ped_status: currentStatus, ped_updated_at } = results[0];
+    const isReactivating = (currentStatus === 'Concluído' || currentStatus === 'Cancelado') && status === 'Em Andamento';
+    const isConcludedChange = currentStatus === 'Concluído' && status !== 'Concluído';
+
+    const updatedAt = new Date(ped_updated_at);
+    const now = new Date();
+    const diffMinutes = (now - updatedAt) / (1000 * 60);
+
+    if ((isReactivating || isConcludedChange) && diffMinutes > 5) {
+      return res.status(403).json({ error: "Não é permitido modificar esse pedido após 5 minutos da conclusão/cancelamento." });
+    }
+
+    const updateQuery = "UPDATE ped_pedido SET ped_status = ?, ped_updated_at = CURRENT_TIMESTAMP WHERE ped_id = ?";
+
+    db.query(updateQuery, [status, id], (updateErr, result) => {
+      if (updateErr) {
+        console.error("Erro ao atualizar status do pedido:", updateErr);
+        return res.status(500).json({ error: "Erro ao atualizar status do pedido." });
+      }
+
+      return res.status(200).json({ message: "Status do pedido atualizado com sucesso!" });
+    });
   });
 };
