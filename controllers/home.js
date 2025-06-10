@@ -14,6 +14,7 @@ export const verifyUser = (req, res, next) => {
             } else {
                 console.log("Você está logado");
                 req.username = decoded.username;
+                req.role = decoded.role;  // attach role from token
                 next();
             }
         })

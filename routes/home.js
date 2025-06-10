@@ -5,7 +5,7 @@ import cookieParser from "cookie-parser";
 const router = express.Router();
 
 router.get("/", verifyUser, (req, res) => {
-    return res.json({ Status: "Success", username: req.username });
+    return res.json({ Status: "Success", username: req.username, role: req.role });
 });
 
 router.get("/logout", (req, res) => {
