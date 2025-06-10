@@ -14,6 +14,7 @@ import statusRoutes from "./routes/status.js";
 import adminRoutes from "./routes/admin.js";
 import loginRoutes from "./routes/login.js"
 import employeeRoute from "./routes/employee.js";
+import empresaRoutes from "./routes/empresa.js";
 
 const app = express();
 const PORT = 8800;
@@ -32,12 +33,13 @@ app.use("/clientes", clienteRoutes);
 app.use("/cardapio", cardapioRoutes);
 app.use("/produtos", produtosRoutes);
 app.use("/pedidos", pedidoRoutes);
-app.use('/status', statusRoutes);
 // app.use('/cadastro', registerRoutes);
 app.use('/login', loginRoutes);
 app.use('/funcionarios', employeeRoute);
 app.use('/admin', adminRoutes);
 app.use("/receita", receitaRoutes);
+app.use('/status', statusRoutes)
+app.use('/empresa', empresaRoutes)
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
