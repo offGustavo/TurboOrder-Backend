@@ -1,5 +1,5 @@
-
-use turboorder;
+CREATE DATABASE turboOrder;
+USE turboOrder;
 
 CREATE TABLE end_endereco (
     end_id INT PRIMARY KEY AUTO_INCREMENT,
