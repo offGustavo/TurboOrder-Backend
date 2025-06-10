@@ -48,7 +48,6 @@ const filterOrder = (query) => {
 export const createPedido = (req, res) => {
   const {
     cliente_fk,
-    funcionario_fk,
     itens,
     ped_status,
     ped_valor,
@@ -58,6 +57,8 @@ export const createPedido = (req, res) => {
     ped_observacao,
     ped_desativado = 0
   } = req.body;
+
+  const funcionario_fk = req.user.id;
 
   if (
     !cliente_fk ||
@@ -156,7 +157,10 @@ export const createPedido = (req, res) => {
 
 export const getFiltredPedidos = (req, res) => {
 
-  const { baseQuery, params } = filterOrder(req.query || {});
+  let { baseQuery, params } = filterOrder(req.query || {});
+
+  baseQuery += " AND p.funcionario_fk = ?";
+  params.push(req.user.id);
 
   db.query(baseQuery, params, (err, data) => {
     if (err) {
@@ -170,7 +174,7 @@ export const getFiltredPedidos = (req, res) => {
 
 export const getPedidos = (req, res) => {
 
-  const q = `
+  let q = `
         SELECT p.*,
                c.cli_nome, c.cli_sobrenome,
                f.fun_nome,
@@ -179,9 +183,10 @@ export const getPedidos = (req, res) => {
         JOIN cli_cliente c ON p.cliente_fk = c.cli_id
         JOIN fun_funcionario f ON p.funcionario_fk = f.fun_id
         JOIN ite_itens i ON p.ite_fk = i.ite_id
+        WHERE p.funcionario_fk = ?
     `;
 
-  db.query(q, (err, data) => {
+  db.query(q, [req.user.id], (err, data) => {
     if (err) {
       console.error("Erro ao buscar pedidos:", err);
       return res.status(500).json({ error: "Erro ao buscar pedidos." });

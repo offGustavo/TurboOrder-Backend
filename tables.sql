@@ -1,3 +1,6 @@
+
+use turboorder;
+
 CREATE TABLE end_endereco (
     end_id INT PRIMARY KEY AUTO_INCREMENT,
     end_cep INT NOT NULL,
@@ -42,7 +45,9 @@ CREATE TABLE cli_cliente (
 CREATE TABLE fun_funcionario (
     fun_id INT PRIMARY KEY AUTO_INCREMENT,
     fun_nome VARCHAR(255) NOT NULL,
-    fun_email VARCHAR(255) NOT NULL UNIQUE
+    fun_email VARCHAR(255) NOT NULL UNIQUE,
+    fun_senha VARCHAR(255) NOT NULL,
+    fun_role ENUM('user', 'admin') NOT NULL DEFAULT 'user'
 );
 
 CREATE TABLE ped_pedido (
@@ -99,4 +104,3 @@ CREATE TABLE ite_itens (
     FOREIGN KEY (carne01_fk) REFERENCES pro_produto(pro_id),
     FOREIGN KEY (carne02_fk) REFERENCES pro_produto(pro_id)
 );
-

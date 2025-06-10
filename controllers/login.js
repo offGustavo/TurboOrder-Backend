@@ -5,7 +5,7 @@ import jwt from "jsonwebtoken";
 import cookieParser from "cookie-parser";
 
 export const loginUser = (req, res) => {
-const sql = "SELECT fun_nome, fun_senha, fun_role FROM fun_funcionario WHERE fun_email = ?";
+const sql = "SELECT fun_id, fun_nome, fun_senha, fun_role FROM fun_funcionario WHERE fun_email = ?";
 
 db.query(sql, [req.body.email], (err, data) => {
     if (err) {
@@ -22,9 +22,10 @@ db.query(sql, [req.body.email], (err, data) => {
             }
 
             if (result) {
+                const id = data[0].fun_id;
                 const username = data[0].fun_nome;
                 const role = data[0].fun_role;
-                const token = jwt.sign({username, role}, "jwt-secret-key", {expiresIn: "1d"});
+                const token = jwt.sign({id, username, role}, "jwt-secret-key", {expiresIn: "1d"});
                 res.cookie("token", token);
                 return res.json({ Status: "Success"});
             } else {

@@ -34,12 +34,12 @@ export const addUser = (req, res) => {
             return res.json({ Error: "Email já cadastrado" });
         }
 
-        const insertSql = `INSERT INTO fun_funcionario (fun_nome, fun_email, fun_senha) VALUES (?, ?, ?)`;
+        const insertSql = `INSERT INTO fun_funcionario (fun_nome, fun_email, fun_senha, fun_role) VALUES (?, ?, ?, ?)`;
         const salt = 10;
 
         bcrypt.hash(password.toString(), salt, (err, hash) => {
             if (err) return res.json({ Error: "Erro ao criptografar a senha" });
-            const values = [username, email, hash];
+            const values = [username, email, hash, 'admin'];
             db.query(insertSql, values, (err, result) => {
                 if (err) return res.json({ Error: "Erro ao inserir dados no servidor" });
                 return res.json({ Status: "Success" });
