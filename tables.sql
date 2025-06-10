@@ -47,7 +47,8 @@ CREATE TABLE fun_funcionario (
     fun_nome VARCHAR(255) NOT NULL,
     fun_email VARCHAR(255) NOT NULL UNIQUE,
     fun_senha VARCHAR(255) NOT NULL,
-    fun_role ENUM('user', 'admin') NOT NULL DEFAULT 'user'
+    fun_role ENUM('user', 'admin') NOT NULL DEFAULT 'user',
+    fun_ativo BOOLEAN NOT NULL DEFAULT TRUE
 );
 
 CREATE TABLE ped_pedido (

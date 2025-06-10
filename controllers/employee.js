@@ -2,7 +2,7 @@ import { db } from "../db.js";
 import bcrypt from "bcrypt";
 
 export const getEmployees = (req, res) => {
-  const sql = "SELECT fun_id, fun_nome, fun_email, fun_role FROM fun_funcionario WHERE fun_role = 'user'";
+  const sql = "SELECT fun_id, fun_nome, fun_email, fun_role FROM fun_funcionario WHERE fun_role = 'user' AND fun_ativo = true";
   db.query(sql, (err, data) => {
     if (err) return res.status(500).json({ error: "Erro ao buscar funcionários" });
     res.json(data);
@@ -69,10 +69,10 @@ export const updateEmployee = (req, res) => {
 
 export const deleteEmployee = (req, res) => {
   const { id } = req.params;
-  const deleteSql = "DELETE FROM fun_funcionario WHERE fun_id = ?";
-  db.query(deleteSql, [id], (err, result) => {
-    if (err) return res.status(500).json({ error: "Erro ao deletar funcionário" });
+  const updateSql = "UPDATE fun_funcionario SET fun_ativo = false WHERE fun_id = ?";
+  db.query(updateSql, [id], (err, result) => {
+    if (err) return res.status(500).json({ error: "Erro ao desativar funcionário" });
     if (result.affectedRows === 0) return res.status(404).json({ error: "Funcionário não encontrado" });
-    res.json({ message: "Funcionário deletado com sucesso" });
+    res.json({ message: "Funcionário desativado com sucesso" });
   });
 };
