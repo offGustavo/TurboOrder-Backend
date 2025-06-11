@@ -26,7 +26,7 @@ export const getCardapioByDate = (req, res) => {
 
 // POST/PUT - Cria ou atualiza cardápio
 
-// NOTE: testar isso, acho que tá bugado
+// FIXME: A Validação não permite modificar cardápios do dia atual
 export const saveOrUpdateCardapio = (req, res) => {
   const data = req.body.data;
   const produtos = req.body.produtos;
