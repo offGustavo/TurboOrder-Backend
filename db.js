@@ -2,9 +2,9 @@ import mysql from "mysql";
 
 const db = mysql.createConnection({
   host: "localhost",
-  user: "turboOrder",
-  password: "turboOrder",
-  database: "turboOrder"
+  user: "turbo_user",
+  password: "senha",
+  database: "turboorder"
 });
 
 db.connect((err) => {
