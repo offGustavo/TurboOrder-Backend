@@ -58,6 +58,7 @@ CREATE TABLE ped_pedido (
     ped_desativado BOOLEAN NOT NULL DEFAULT FALSE,
     ped_ordem_dia INT NOT NULL DEFAULT 0,
     ped_horarioRetirada TIME DEFAULT NULL,
+    ped_update_at  datetime DEFAULT current_timestamp(),
     FOREIGN KEY (cliente_fk) REFERENCES cli_cliente(cli_id),
     FOREIGN KEY (funcionario_fk) REFERENCES fun_funcionario(fun_id)
 );
