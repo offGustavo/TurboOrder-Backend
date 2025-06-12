@@ -4,6 +4,11 @@ import bcrypt from "bcrypt";
 export const addUser = (req, res) => {
     const { username, email, password } = req.body;
 
+    const emailRegex = /^[A-Z0-9._%+-]+@(gmail\.com|googlemail\.com|hotmail.com)$/;
+    if (!emailRegex.test(email)) {
+        return res.json({ Error: "Email inválido. Use um email do Gmail válido." });
+    }
+
     if (!password || password.length < 8) {
         return res.json({ Error: "A senha deve ter pelo menos 8 caracteres" });
     }
