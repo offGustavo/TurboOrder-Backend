@@ -1,9 +1,5 @@
 import { db } from "../db.js";
-import escpos from "escpos";
-
-import escposUSB from "escpos-usb";
-
-escpos.USB = escposUSB;
+import ThermalPrinter from "node-thermal-printer";
 
 export const printOrderById = (req, res) => {
   const { ped_id } = req.body;
@@ -79,7 +75,7 @@ export const printOrderById = (req, res) => {
       fetchProductName(pedido.acompanhamento_fk),
       fetchProductName(pedido.carne01_fk),
       fetchProductName(pedido.carne02_fk)
-    ]).then(([
+    ]).then(async ([
       arroz,
       feijao,
       massa,
@@ -98,42 +94,55 @@ export const printOrderById = (req, res) => {
         Carne2: carne2,
       };
 
-      // Detecta impressora USB automaticamente
-      const devices = escposUSB.findPrinter();
-      if (!devices || devices.length === 0) {
-        return res.status(500).json({ success: false, message: "Impressora USB não encontrada" });
+      // Configurar a impressora
+      const printer = new ThermalPrinter.printer({
+        type: ThermalPrinter.types.EPSON,
+        interface: "usb", // pode ser "printer:POS-58", "file:/dev/usb/lp0", "usb" etc.
+        characterSet: "SLOVENIA",
+        removeSpecialCharacters: false,
+        lineCharacter: "-",
+        options: {
+          timeout: 5000,
+        },
+      });
+
+      const isConnected = await printer.isPrinterConnected();
+      if (!isConnected) {
+        return res.status(500).json({ success: false, message: "Impressora não conectada" });
       }
 
-      const device = new escpos.USB();
-      const printer = new escpos.Printer(device);
+      try {
+        printer.alignCenter();
+        printer.setTextSize(2, 2);
+        printer.println("Pedido");
+        printer.setTextSize(1, 1);
+        printer.drawLine();
 
-      device.open(() => {
-        printer
-          .encode("UTF-8")
-          .size(2, 2)
-          .text("Pedido")
-          .size(1, 1)
-          .drawLine()
-          .text(`Cliente: ${pedido.cli_nome} ${pedido.cli_sobrenome}`)
-          .text(`Telefone: ${pedido.con_telefone || "-"}`)
-          .text(
-            `Endereço: ${pedido.end_rua || "-"}, ${pedido.cli_numero || "-"} ${pedido.cli_complemento || "-"} - ${pedido.end_bairro || "-"}, ${pedido.end_cidade || "-"} - CEP: ${pedido.end_cep || "-"}`
-          )
-          .text(`Pagamento: ${pedido.ped_tipoPagamento || "-"}`)
-          .text(`Observações: ${pedido.ped_observacao || "-"}`)
-          .text("Produtos:");
+        printer.alignLeft();
+        printer.println(`Cliente: ${pedido.cli_nome} ${pedido.cli_sobrenome}`);
+        printer.println(`Telefone: ${pedido.con_telefone || "-"}`);
+        printer.println(`Endereço: ${pedido.end_rua || "-"}, ${pedido.cli_numero || "-"} ${pedido.cli_complemento || "-"} - ${pedido.end_bairro || "-"}, ${pedido.end_cidade || "-"} - CEP: ${pedido.end_cep || "-"}`);
+        printer.println(`Pagamento: ${pedido.ped_tipoPagamento || "-"}`);
+        printer.println(`Observações: ${pedido.ped_observacao || "-"}`);
+        printer.println("Produtos:");
 
         for (const [categoria, nome] of Object.entries(selectedProducts)) {
-          if (nome) printer.text(`- ${categoria}: ${nome}`);
+          if (nome) printer.println(`- ${categoria}: ${nome}`);
         }
 
         if (pedido.ped_horarioRetirada) {
-          printer.text(`Retirada: ${pedido.ped_horarioRetirada}`);
+          printer.println(`Retirada: ${pedido.ped_horarioRetirada}`);
         }
 
-        printer.cut().close();
-        res.json({ success: true, message: "Impressão enviada." });
-      });
+        printer.drawLine();
+        printer.cut();
+        await printer.execute();
+
+        res.json({ success: true, message: "Impressão enviada com sucesso" });
+      } catch (err) {
+        console.error("Erro na impressão:", err);
+        res.status(500).json({ success: false, message: "Erro ao imprimir" });
+      }
     }).catch(err => {
       console.error("Erro ao buscar nomes dos produtos:", err);
       res.status(500).json({ success: false, message: "Erro ao buscar dados dos produtos" });

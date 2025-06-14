@@ -18,6 +18,7 @@
     "escpos-usb": "^3.0.0-alpha.4",
     "express": "^4.21.2",
     "mysql": "^2.18.1",
+    "node-thermal-printer": "^4.5.0",
     "nodemon": "^3.1.7"
   }
 }
