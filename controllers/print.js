@@ -1,9 +1,9 @@
 import { db } from "../db.js";
-
 import escpos from "escpos";
-import SerialPort from "escpos-serialport";
 
-escpos.SerialPort = SerialPort;
+import escposUSB from "escpos-usb";
+
+escpos.USB = escposUSB;
 
 export const printOrderById = (req, res) => {
   const { ped_id } = req.body;
@@ -32,7 +32,6 @@ export const printOrderById = (req, res) => {
 
       cont.con_telefone,
 
-      -- Campos de ite_itens
       ite.arroz_fk,
       ite.feijao_fk,
       ite.massa_fk,
@@ -61,7 +60,6 @@ export const printOrderById = (req, res) => {
 
     const pedido = results[0];
 
-    // Função para buscar nome do produto pelo pro_id
     const fetchProductName = (pro_id) => {
       return new Promise((resolve, reject) => {
         if (!pro_id) return resolve(null);
@@ -100,8 +98,13 @@ export const printOrderById = (req, res) => {
         Carne2: carne2,
       };
 
-      // Aqui você pode usar escpos para imprimir:
-      const device = new escpos.SerialPort("/dev/ttyUSB0");
+      // Detecta impressora USB automaticamente
+      const devices = escposUSB.findPrinter();
+      if (!devices || devices.length === 0) {
+        return res.status(500).json({ success: false, message: "Impressora USB não encontrada" });
+      }
+
+      const device = new escpos.USB();
       const printer = new escpos.Printer(device);
 
       device.open(() => {

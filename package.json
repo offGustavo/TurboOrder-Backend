@@ -15,6 +15,7 @@
     "cors": "^2.8.5",
     "escpos": "^3.0.0-alpha.6",
     "escpos-serialport": "^3.0.0-alpha.4",
+    "escpos-usb": "^3.0.0-alpha.4",
     "express": "^4.21.2",
     "mysql": "^2.18.1",
     "nodemon": "^3.1.7"
