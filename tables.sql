@@ -1,4 +1,4 @@
-CREATE DATABASE turboOrder;
+CREATE DATABASE IF NOT EXISTS turboOrder;
 USE turboOrder;
 
 CREATE TABLE end_endereco (
@@ -27,6 +27,20 @@ CREATE TABLE emp_empresa (
     FOREIGN KEY (contato_fk) REFERENCES con_contato(con_id)
 );
 
+CREATE TABLE fun_funcionario (
+    fun_id INT PRIMARY KEY AUTO_INCREMENT,
+    fun_nome VARCHAR(255) NOT NULL,
+    fun_email VARCHAR(255) NOT NULL UNIQUE,
+    fun_senha VARCHAR(255) NOT NULL,
+    fun_role ENUM('user', 'admin') NOT NULL DEFAULT 'user',
+    fun_admin_approved BOOLEAN NOT NULL DEFAULT FALSE,
+    fun_codigo_verificacao VARCHAR(6),
+    fun_verificado BOOLEAN NOT NULL DEFAULT FALSE,
+    fun_ativo BOOLEAN NOT NULL DEFAULT TRUE,
+    admin_owner_id INT DEFAULT NULL,
+    FOREIGN KEY (admin_owner_id) REFERENCES fun_funcionario(fun_id)
+);
+
 CREATE TABLE cli_cliente (
     cli_id INT PRIMARY KEY AUTO_INCREMENT,
     cli_nome VARCHAR(255) NOT NULL,
@@ -37,55 +51,27 @@ CREATE TABLE cli_cliente (
     cli_numero INT,
     cli_complemento VARCHAR(255),
     cli_ativo BOOLEAN DEFAULT TRUE,
+    admin_owner_id INT,
     FOREIGN KEY (endereco_fk) REFERENCES end_endereco(end_id),
     FOREIGN KEY (contato_fk) REFERENCES con_contato(con_id),
-    FOREIGN KEY (empresa_fk) REFERENCES emp_empresa(emp_id)
-);
-
-CREATE TABLE fun_funcionario (
-    fun_id INT PRIMARY KEY AUTO_INCREMENT,
-    fun_nome VARCHAR(255) NOT NULL,
-    fun_email VARCHAR(255) NOT NULL UNIQUE,
-    fun_senha VARCHAR(255) NOT NULL,
-    fun_role ENUM('user', 'admin') NOT NULL DEFAULT 'user',
-    fun_ativo BOOLEAN NOT NULL DEFAULT TRUE
-);
-
-CREATE TABLE ped_pedido (
-    ped_id INT PRIMARY KEY AUTO_INCREMENT,
-    cliente_fk INT,
-    funcionario_fk INT,
-    ite_fk INT,
-    ped_status ENUM('Em Andamento', 'Concluído', 'Cancelado') NOT NULL,
-    ped_valor FLOAT NOT NULL,
-    ped_data DATE NOT NULL,
-    ped_tipoPagamento VARCHAR(50),
-    ped_observacao TINYTEXT NULL,
-    ped_desativado BOOLEAN NOT NULL DEFAULT FALSE,
-    ped_ordem_dia INT NOT NULL DEFAULT 0,
-    ped_horarioRetirada TIME DEFAULT NULL,
-    FOREIGN KEY (cliente_fk) REFERENCES cli_cliente(cli_id),
-    FOREIGN KEY (funcionario_fk) REFERENCES fun_funcionario(fun_id)
+    FOREIGN KEY (empresa_fk) REFERENCES emp_empresa(emp_id),
+    FOREIGN KEY (admin_owner_id) REFERENCES fun_funcionario(fun_id)
 );
 
 CREATE TABLE pro_produto (
     pro_id INT PRIMARY KEY AUTO_INCREMENT,
     pro_nome VARCHAR(255) NOT NULL,
     pro_tipo VARCHAR(100),
-    pro_ativo BOOLEAN NOT NULL
+    pro_ativo BOOLEAN NOT NULL,
+    admin_owner_id INT,
+    FOREIGN KEY (admin_owner_id) REFERENCES fun_funcionario(fun_id)
 );
 
 CREATE TABLE car_cardapio (
     car_id INT PRIMARY KEY AUTO_INCREMENT,
-    car_data DATE NOT NULL
-);
-
-CREATE TABLE dia_cardapioDia (
-    dia_id INT PRIMARY KEY AUTO_INCREMENT,
-    pro_fk INT NOT NULL,
-    car_fk INT NOT NULL,
-    FOREIGN KEY (pro_fk) REFERENCES pro_produto(pro_id),
-    FOREIGN KEY (car_fk) REFERENCES car_cardapio(car_id)
+    car_data DATE NOT NULL,
+    admin_owner_id INT,
+    FOREIGN KEY (admin_owner_id) REFERENCES fun_funcionario(fun_id)
 );
 
 CREATE TABLE ite_itens (
@@ -104,4 +90,32 @@ CREATE TABLE ite_itens (
     FOREIGN KEY (acompanhamento_fk) REFERENCES pro_produto(pro_id),
     FOREIGN KEY (carne01_fk) REFERENCES pro_produto(pro_id),
     FOREIGN KEY (carne02_fk) REFERENCES pro_produto(pro_id)
+);
+
+CREATE TABLE ped_pedido (
+    ped_id INT PRIMARY KEY AUTO_INCREMENT,
+    cliente_fk INT,
+    funcionario_fk INT,
+    ite_fk INT,
+    ped_status ENUM('Em Andamento', 'Concluído', 'Cancelado') NOT NULL,
+    ped_valor FLOAT NOT NULL,
+    ped_data DATE NOT NULL,
+    ped_tipoPagamento VARCHAR(50),
+    ped_observacao TINYTEXT NULL,
+    ped_desativado BOOLEAN NOT NULL DEFAULT FALSE,
+    ped_ordem_dia INT NOT NULL DEFAULT 0,
+    ped_horarioRetirada TIME DEFAULT NULL,
+    admin_owner_id INT NOT NULL,
+    FOREIGN KEY (cliente_fk) REFERENCES cli_cliente(cli_id),
+    FOREIGN KEY (funcionario_fk) REFERENCES fun_funcionario(fun_id),
+    FOREIGN KEY (ite_fk) REFERENCES ite_itens(ite_id),
+    FOREIGN KEY (admin_owner_id) REFERENCES fun_funcionario(fun_id)
+);
+
+CREATE TABLE dia_cardapioDia (
+    dia_id INT PRIMARY KEY AUTO_INCREMENT,
+    pro_fk INT NOT NULL,
+    car_fk INT NOT NULL,
+    FOREIGN KEY (pro_fk) REFERENCES pro_produto(pro_id),
+    FOREIGN KEY (car_fk) REFERENCES car_cardapio(car_id)
 );

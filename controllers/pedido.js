@@ -58,7 +58,8 @@ export const createPedido = (req, res) => {
     ped_desativado = 0
   } = req.body;
 
-  const funcionario_fk = req.user.id;
+  const funcionario_fk = req.user.fun_id;
+  const admin_owner_id = req.adminId;
 
   if (
     !cliente_fk ||
@@ -125,7 +126,7 @@ export const createPedido = (req, res) => {
           cliente_fk, funcionario_fk, ite_fk, ped_status, ped_valor, ped_data,
           ped_tipoPagamento, ped_observacao, ped_desativado, ped_ordem_dia, ped_horarioRetirada
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `;
 
       db.query(insertPedidoQuery, [
@@ -145,10 +146,18 @@ export const createPedido = (req, res) => {
           console.error("Erro ao inserir pedido:", err2);
           return res.status(500).json({ error: "Erro ao cadastrar pedido." });
         }
-        return res.status(201).json({
-          message: "Pedido cadastrado com sucesso!",
-          pedidoId: result2.insertId,
-          ordem_dia: ped_ordem_dia,
+        // Update ped_pedido with admin_owner_id
+        const updateAdminOwnerSql = "UPDATE ped_pedido SET admin_owner_id = ? WHERE ped_id = ?";
+        db.query(updateAdminOwnerSql, [admin_owner_id, result2.insertId], (err3) => {
+          if (err3) {
+            console.error("Erro ao atualizar admin_owner_id do pedido:", err3);
+            return res.status(500).json({ error: "Erro ao atualizar pedido." });
+          }
+          return res.status(201).json({
+            message: "Pedido cadastrado com sucesso!",
+            pedidoId: result2.insertId,
+            ordem_dia: ped_ordem_dia,
+          });
         });
       });
     });
@@ -159,8 +168,8 @@ export const getFiltredPedidos = (req, res) => {
 
   let { baseQuery, params } = filterOrder(req.query || {});
 
-  baseQuery += " AND p.funcionario_fk = ?";
-  params.push(req.user.id);
+  baseQuery += " AND (p.funcionario_fk = ? OR p.admin_owner_id = ?)";
+  params.push(req.user.fun_id, req.adminId);
 
   db.query(baseQuery, params, (err, data) => {
     if (err) {
@@ -183,10 +192,10 @@ export const getPedidos = (req, res) => {
         JOIN cli_cliente c ON p.cliente_fk = c.cli_id
         JOIN fun_funcionario f ON p.funcionario_fk = f.fun_id
         JOIN ite_itens i ON p.ite_fk = i.ite_id
-        WHERE p.funcionario_fk = ?
+        WHERE p.funcionario_fk = ? OR p.admin_owner_id = ?
     `;
 
-  db.query(q, [req.user.id], (err, data) => {
+  db.query(q, [req.user.fun_id, req.adminId], (err, data) => {
     if (err) {
       console.error("Erro ao buscar pedidos:", err);
       return res.status(500).json({ error: "Erro ao buscar pedidos." });
