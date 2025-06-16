@@ -1,23 +1,23 @@
 import { db } from "../db.js";
 import bcrypt from "bcrypt";
 
-function getAdminPrincipalIdFromDB(userId) {
-  return new Promise((resolve, reject) => {
-    const sql = "SELECT admin_owner_id, fun_id FROM fun_funcionario WHERE fun_id = ?";
-    db.query(sql, [userId], (err, results) => {
-      if (err) return reject(err);
-      if (results.length === 0) return reject(new Error("Usuário não encontrado"));
+function getAdminPrincipalIdFromDB(userId, callback) {
+  const sql = "SELECT admin_owner_id, fun_id FROM fun_funcionario WHERE fun_id = ?";
+  db.query(sql, [userId], (err, results) => {
+    if (err) return callback(err);
+    if (results.length === 0) return callback(new Error("Usuário não encontrado"));
 
-      const adminOwnerId = results[0].admin_owner_id || results[0].fun_id;
-      resolve(adminOwnerId);
-    });
+    // Se admin_owner_id for null, o próprio fun_id é admin principal
+    const adminOwnerId = results[0].admin_owner_id || results[0].fun_id;
+    callback(null, adminOwnerId);
   });
 }
 
-export const getEmployees = async (req, res) => {
-  try {
-    const userId = req.user.id;
-    const adminPrincipalId = await getAdminPrincipalIdFromDB(userId);
+export const getEmployees = (req, res) => {
+  const userId = req.user.id;
+
+  getAdminPrincipalIdFromDB(userId, (err, adminPrincipalId) => {
+    if (err) return res.status(500).json({ error: "Erro ao determinar admin principal" });
 
     const sql = `
       SELECT fun_id, fun_nome, fun_email, fun_role
@@ -29,20 +29,18 @@ export const getEmployees = async (req, res) => {
       if (err) return res.status(500).json({ error: "Erro ao buscar funcionários" });
       res.json(data);
     });
-  } catch (err) {
-    res.status(500).json({ error: err.message || "Erro interno" });
-  }
+  });
 };
 
-export const createEmployee = async (req, res) => {
+export const createEmployee = (req, res) => {
   const { username, email, password, role } = req.body;
 
-  if (!username || !email || !password || password.length < 8 || !role) {
-    return res.status(400).json({ error: "Nome, email, senha (mínimo 8 caracteres) e função são obrigatórios" });
-  }
+  getAdminPrincipalIdFromDB(req.user.id, (err, adminPrincipalId) => {
+    if (err) return res.status(500).json({ error: "Erro ao determinar admin principal" });
 
-  try {
-    const adminPrincipalId = await getAdminPrincipalIdFromDB(req.user.id);
+    if (!username || !email || !password || password.length < 8 || !role) {
+      return res.status(400).json({ error: "Nome, email, senha (mínimo 8 caracteres) e função são obrigatórios" });
+    }
 
     const checkEmailSql = "SELECT * FROM fun_funcionario WHERE fun_email = ?";
     db.query(checkEmailSql, [email], (err, data) => {
@@ -59,21 +57,19 @@ export const createEmployee = async (req, res) => {
         });
       });
     });
-  } catch (err) {
-    res.status(500).json({ error: err.message || "Erro interno" });
-  }
+  });
 };
 
-export const updateEmployee = async (req, res) => {
+export const updateEmployee = (req, res) => {
   const { id } = req.params;
   const { username, email, password, role } = req.body;
 
-  if (!username || !email || !role) {
-    return res.status(400).json({ error: "Nome, email e função são obrigatórios" });
-  }
+  getAdminPrincipalIdFromDB(req.user.id, (err, adminPrincipalId) => {
+    if (err) return res.status(500).json({ error: "Erro ao determinar admin principal" });
 
-  try {
-    const adminPrincipalId = await getAdminPrincipalIdFromDB(req.user.id);
+    if (!username || !email || !role) {
+      return res.status(400).json({ error: "Nome, email e função são obrigatórios" });
+    }
 
     const checkSql = "SELECT fun_id, admin_owner_id FROM fun_funcionario WHERE fun_id = ?";
     db.query(checkSql, [id], (err, results) => {
@@ -82,10 +78,12 @@ export const updateEmployee = async (req, res) => {
 
       const targetUser = results[0];
 
-      if (targetUser.admin_owner_id === null) {
+      // Bloqueia alteração do admin principal
+      if (targetUser.fun_id === adminPrincipalId) {
         return res.status(403).json({ error: "Não é permitido alterar o administrador principal." });
       }
 
+      // Bloqueia alteração se funcionário não for subordinado ao admin logado
       if (targetUser.admin_owner_id !== adminPrincipalId) {
         return res.status(403).json({ error: "Não autorizado a alterar este funcionário." });
       }
@@ -109,16 +107,14 @@ export const updateEmployee = async (req, res) => {
         });
       }
     });
-  } catch (err) {
-    res.status(500).json({ error: err.message || "Erro interno" });
-  }
+  });
 };
 
-export const deleteEmployee = async (req, res) => {
+export const deleteEmployee = (req, res) => {
   const { id } = req.params;
 
-  try {
-    const adminPrincipalId = await getAdminPrincipalIdFromDB(req.user.id);
+  getAdminPrincipalIdFromDB(req.user.id, (err, adminPrincipalId) => {
+    if (err) return res.status(500).json({ error: "Erro ao determinar admin principal" });
 
     const checkSql = "SELECT fun_id, admin_owner_id FROM fun_funcionario WHERE fun_id = ?";
     db.query(checkSql, [id], (err, results) => {
@@ -127,10 +123,12 @@ export const deleteEmployee = async (req, res) => {
 
       const targetUser = results[0];
 
-      if (targetUser.admin_owner_id === null) {
+      // Bloqueia exclusão do admin principal
+      if (targetUser.fun_id === adminPrincipalId) {
         return res.status(403).json({ error: "Não é permitido excluir o administrador principal." });
       }
 
+      // Bloqueia exclusão se funcionário não for subordinado ao admin logado
       if (targetUser.admin_owner_id !== adminPrincipalId) {
         return res.status(403).json({ error: "Não autorizado a excluir este funcionário." });
       }
@@ -142,7 +140,5 @@ export const deleteEmployee = async (req, res) => {
         res.json({ message: "Funcionário desativado com sucesso" });
       });
     });
-  } catch (err) {
-    res.status(500).json({ error: err.message || "Erro interno" });
-  }
+  });
 };
