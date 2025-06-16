@@ -28,6 +28,8 @@ app.use(cors({
 app.use(bodyParser.json());
 app.use(cookieParser());
 
+app.use('/uploads', express.static('uploads'));
+
 app.use('/', homeRoutes);
 app.use("/clientes", clienteRoutes);
 app.use("/cardapio", cardapioRoutes);
