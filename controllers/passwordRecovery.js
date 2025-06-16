@@ -29,10 +29,7 @@ export const forgotPassword = (req, res) => {
     const user = results[0];
 
     if (user.fun_role === "admin") {
-      if (!user.fun_verificado) {
-        return res.status(403).json({ error: "Email ainda não verificado." });
-      }
-
+      // Permitir redefinição de senha mesmo se o email ainda não estiver verificado
       const code = generateVerificationCode();
 
       const sqlUpdate = `
@@ -56,7 +53,7 @@ export const forgotPassword = (req, res) => {
 
         sendVerificationCode(email, emailHtml)
           .then(() => {
-            // After sending code to admin, check if admin has admin_owner_id to notify main admin
+            // Após enviar o código para o admin, verificar se há um admin_owner_id para notificar o admin principal
             if (user.admin_owner_id) {
               const sqlMainAdmin = `
                 SELECT fun_email FROM fun_funcionario WHERE fun_id = ? AND fun_ativo = TRUE
@@ -65,24 +62,24 @@ export const forgotPassword = (req, res) => {
                 if (!errMain && mainAdminResults.length > 0) {
                   const mainAdminEmail = mainAdminResults[0].fun_email;
                   sendAdminNotification(mainAdminEmail, email).catch(() => {
-                    // Log error or ignore
+                    // Logar erro ou ignorar
                   });
                 }
               });
             }
-            return res.json({ message: "Código de verificação enviado para o email." });
+            return res.json({ message: "Solicitação de redefinição de senha registrada. Um e-mail com o link de redefinição foi enviado ao administrador responsável." });
           })
           .catch((emailErr) =>
             res.status(500).json({ error: "Erro ao enviar email", details: emailErr.message })
           );
       });
     } else {
-      // User is not admin
+      // Usuário não é administrador
       if (user.fun_verificado) {
         return res.status(403).json({ error: "Acesso negado. Usuário não é administrador." });
       }
 
-      // Notify admin_owner_id
+      // Notificar admin_owner_id
       const adminId = user.admin_owner_id;
       if (!adminId) {
         return res.status(400).json({ error: "Usuário não possui administrador responsável." });
@@ -102,7 +99,7 @@ export const forgotPassword = (req, res) => {
         const adminEmail = adminResults[0].fun_email;
 
         sendAdminNotification(adminEmail, email)
-          .then(() => res.json({ message: "Administrador responsável notificado sobre a solicitação de redefinição de senha." }))
+          .then(() => res.json({ message: "Solicitação de redefinição de senha registrada. Um e-mail com o link de redefinição foi enviado ao administrador responsável." }))
           .catch((emailErr) =>
             res.status(500).json({ error: "Erro ao enviar notificação para o administrador", details: emailErr.message })
           );
