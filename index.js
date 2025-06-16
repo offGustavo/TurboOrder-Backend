@@ -14,6 +14,7 @@ import registerRoutes from "./routes/register.js";
 import adminRoutes from "./routes/admin.js";
 import loginRoutes from "./routes/login.js"
 import employeeRoute from "./routes/employee.js";
+import userRoutes from "./routes/user.js";
 
 const app = express();
 const PORT = 8800;
@@ -37,6 +38,7 @@ app.use('/cadastro', registerRoutes);
 app.use('/login', loginRoutes);
 app.use('/funcionarios', employeeRoute);
 app.use('/admin', adminRoutes);
+app.use('/user', userRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);

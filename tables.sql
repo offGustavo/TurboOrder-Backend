@@ -38,6 +38,7 @@ CREATE TABLE fun_funcionario (
     fun_verificado BOOLEAN NOT NULL DEFAULT FALSE,
     fun_ativo BOOLEAN NOT NULL DEFAULT TRUE,
     admin_owner_id INT DEFAULT NULL,
+    fun_foto VARCHAR(255) NULL,
     FOREIGN KEY (admin_owner_id) REFERENCES fun_funcionario(fun_id)
 );
 
