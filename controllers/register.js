@@ -28,7 +28,7 @@ export const addUser = (req, res) => {
         .then(() => {
           const insertSql = `
             INSERT INTO fun_funcionario (fun_nome, fun_email, fun_senha, fun_role, fun_admin_approved, fun_codigo_verificacao, fun_verificado, fun_ativo)
-            VALUES (?, ?, ?, ?, FALSE, ?, FALSE, FALSE)
+            VALUES (?, ?, ?, ?, FALSE, ?, TRUE, FALSE)
           `;
           const values = [username, email, hash, "admin", code];
           db.query(insertSql, values, (err, result) => {
