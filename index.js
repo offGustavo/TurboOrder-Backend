@@ -9,6 +9,7 @@ import cardapioRoutes from "./routes/cardapio.js";
 import produtosRoutes from "./routes/produtos.js";
 import clienteRoutes from "./routes/cliente.js";
 import pedidoRoutes from "./routes/pedido.js";
+import receitaRoutes from "./routes/receita.js";
 import statusRoutes from "./routes/status.js";
 import adminRoutes from "./routes/admin.js";
 import loginRoutes from "./routes/login.js"
@@ -36,6 +37,7 @@ app.use('/status', statusRoutes);
 app.use('/login', loginRoutes);
 app.use('/funcionarios', employeeRoute);
 app.use('/admin', adminRoutes);
+app.use("/receita", receitaRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
