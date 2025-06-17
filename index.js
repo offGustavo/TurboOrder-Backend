@@ -18,6 +18,7 @@ import userRoutes from "./routes/user.js";
 
 // limpeza da pasta uploads
 import "./cleanupUploads.js";
+import empresaRoutes from "./routes/empresa.js";
 
 const app = express();
 const PORT = 8800;
@@ -44,6 +45,7 @@ app.use('/login', loginRoutes);
 app.use('/funcionarios', employeeRoute);
 app.use('/admin', adminRoutes);
 app.use('/user', userRoutes);
+app.use('/empresa', empresaRoutes)
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
