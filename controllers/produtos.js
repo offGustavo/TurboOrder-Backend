@@ -38,6 +38,17 @@ export const getProducts = (req, res) => {
   });
 };
 
+
+export const getAllProducts = (_, res) => {
+  const q = "SELECT * FROM pro_produto WHERE pro_ativo = TRUE";
+
+  db.query(q, (err, data) => {
+    if (err) return res.json(err);
+
+    return res.status(200).json(data);
+  });
+};
+
 export const addProduct = (req, res) => {
   const q = "INSERT INTO pro_produto (pro_nome, pro_tipo, pro_ativo) VALUES (?, ?, true)";
 
