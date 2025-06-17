@@ -94,7 +94,8 @@ export const getEmpresas = (req, res) => {
     SELECT 
       emp.*, 
       end.end_cep, end.end_cidade, end.end_bairro, end.end_rua,
-      con.con_telefone
+      con.con_telefone AS con_telefone,
+      emp.emp_funcionario_telefone AS emp_funcionario_telefone
     FROM emp_empresa emp
     JOIN end_endereco end ON emp.endereco_fk = end.end_id
     JOIN con_contato con ON emp.contato_fk = con.con_id 
