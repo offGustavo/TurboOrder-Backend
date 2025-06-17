@@ -1,14 +1,43 @@
 import { db } from "../db.js";
 
-export const getProducts = (_, res) => {
-  const q = "SELECT * FROM pro_produto WHERE pro_ativo = TRUE";
+export const getProducts = (req, res) => {
 
-  db.query(q, (err, data) => {
-    if (err) return res.json(err);
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const offset = (page - 1) * limit;
 
-    return res.status(200).json(data);
+
+  const q = `
+        SELECT * FROM pro_produto 
+        WHERE pro_ativo = TRUE 
+        LIMIT ? OFFSET ?
+    `;
+
+
+  const countQuery = "SELECT COUNT(*) AS total FROM pro_produto WHERE pro_ativo = TRUE";
+
+  db.query(q, [limit, offset], (err, data) => {
+    if (err) return res.status(500).json(err);
+
+    db.query(countQuery, (countErr, countResult) => {
+      if (countErr) return res.status(500).json(countErr);
+
+      const totalItems = countResult[0].total;
+      const totalPages = Math.ceil(totalItems / limit);
+
+      return res.status(200).json({
+        data,
+        pagination: {
+          totalItems,
+          totalPages,
+          currentPage: page,
+          itemsPerPage: limit,
+        },
+      });
+    });
   });
 };
+
 
 export const addProduct = (req, res) => {
   const q = "INSERT INTO pro_produto (pro_nome, pro_tipo, pro_ativo) VALUES (?, ?, true)";
