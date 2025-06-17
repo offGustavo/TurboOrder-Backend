@@ -5,6 +5,7 @@ import cardapioRoutes from "./routes/cardapio.js";
 import produtosRoutes from "./routes/produtos.js";
 import clienteRoutes from "./routes/cliente.js";
 import pedidoRoutes from "./routes/pedido.js";
+import receitaRoutes from "./routes/receita.js";
 import statusRoutes from "./routes/status.js";
 
 const app = express();
@@ -17,6 +18,7 @@ app.use("/clientes", clienteRoutes);
 app.use("/cardapio", cardapioRoutes);
 app.use("/produtos", produtosRoutes);
 app.use("/pedidos", pedidoRoutes);
+app.use("/receita", receitaRoutes);
 app.use('/status', statusRoutes)
 
 app.listen(PORT, () => {
