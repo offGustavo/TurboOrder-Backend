@@ -1,7 +1,9 @@
 import { db } from "../db.js";
 
 export const createEmpresa = (req, res) => {
-  const { empInfo, address, con_telefone } = req.body;
+  const { empInfo, address, con_telefone, emp_funcionario_telefone } = req.body;
+
+  console.log('Dados recebidos:', { empInfo, address, con_telefone, emp_funcionario_telefone });
 
   if (
     !empInfo?.emp_razaoSocial ||
@@ -10,11 +12,20 @@ export const createEmpresa = (req, res) => {
     !address?.end_cidade ||
     !address?.end_bairro ||
     !address?.end_rua ||
-    !con_telefone
+    !con_telefone ||
+    !emp_funcionario_telefone
   ) {
-    return res
-      .status(400)
-      .json({ error: "Todos os campos obrigatórios devem ser preenchidos." });
+    console.error('Campos obrigatórios faltando:', {
+      emp_razaoSocial: !empInfo?.emp_razaoSocial,
+      emp_cnpj: !empInfo?.emp_cnpj,
+      end_cep: !address?.end_cep,
+      end_cidade: !address?.end_cidade,
+      end_bairro: !address?.end_bairro,
+      end_rua: !address?.end_rua,
+      con_telefone: !con_telefone,
+      emp_funcionario_telefone: !emp_funcionario_telefone
+    });
+    return res.status(400).json({ error: "Todos os campos obrigatórios devem ser preenchidos." });
   }
 
   // 1. Inserir endereço
@@ -34,57 +45,80 @@ export const createEmpresa = (req, res) => {
     (errEndereco, resultEndereco) => {
       if (errEndereco) {
         console.error("Erro ao inserir endereço:", errEndereco);
-        return res.status(500).json({ error: "Erro ao cadastrar endereço." });
+        return res.status(500).json({
+          error: "Erro ao cadastrar endereço.",
+          details: errEndereco.message
+        });
       }
 
       const enderecoId = resultEndereco.insertId;
+      console.log('Endereço inserido com ID:', enderecoId);
 
-      // 2. Inserir contato
+      // 2. Inserir contato (apenas telefone da empresa)
       const insertContatoQuery = `
         INSERT INTO con_contato (con_telefone)
         VALUES (?)
       `;
 
-      db.query(insertContatoQuery, [con_telefone], (errContato, resultContato) => {
-        if (errContato) {
-          console.error("Erro ao inserir contato:", errContato);
-          return res.status(500).json({ error: "Erro ao cadastrar contato." });
-        }
-
-        const contatoId = resultContato.insertId;
-
-        // 3. Inserir empresa
-        const insertEmpresaQuery = `
-          INSERT INTO emp_empresa (
-            emp_cnpj, endereco_fk, emp_inscricaoEstado, emp_razaoSocial,
-            contato_fk, emp_numero, emp_complemento
-          ) VALUES (?, ?, ?, ?, ?, ?, ?)
-        `;
-
-        db.query(
-          insertEmpresaQuery,
-          [
-            empInfo.emp_cnpj,
-            enderecoId,
-            empInfo.emp_inscricaoEstado || null,
-            empInfo.emp_razaoSocial,
-            contatoId,
-            empInfo.emp_numero || null,
-            empInfo.emp_complemento || null
-          ],
-          (errEmpresa, resultEmpresa) => {
-            if (errEmpresa) {
-              console.error("Erro ao inserir empresa:", errEmpresa);
-              return res.status(500).json({ error: "Erro ao cadastrar empresa." });
-            }
-
-            return res.status(201).json({
-              message: "Empresa cadastrada com sucesso!",
-              empresaId: resultEmpresa.insertId,
+      db.query(
+        insertContatoQuery,
+        [con_telefone],
+        (errContato, resultContato) => {
+          if (errContato) {
+            console.error("Erro ao inserir contato:", errContato);
+            // Rollback do endereço inserido
+            db.query('DELETE FROM end_endereco WHERE end_id = ?', [enderecoId]);
+            return res.status(500).json({
+              error: "Erro ao cadastrar contato.",
+              details: errContato.message
             });
           }
-        );
-      });
+
+          const contatoId = resultContato.insertId;
+          console.log('Contato inserido com ID:', contatoId);
+
+          // 3. Inserir empresa (incluindo telefone do funcionário)
+          const insertEmpresaQuery = `
+            INSERT INTO emp_empresa (
+              emp_cnpj, endereco_fk, emp_inscricaoEstado, emp_razaoSocial,
+              contato_fk, emp_numero, emp_complemento, emp_funcionario_telefone
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+          `;
+
+          db.query(
+            insertEmpresaQuery,
+            [
+              empInfo.emp_cnpj,
+              enderecoId,
+              empInfo.emp_inscricaoEstado || null,
+              empInfo.emp_razaoSocial,
+              contatoId,
+              empInfo.emp_numero || null,
+              empInfo.emp_complemento || null,
+              emp_funcionario_telefone
+            ],
+            (errEmpresa, resultEmpresa) => {
+              if (errEmpresa) {
+                console.error("Erro ao inserir empresa:", errEmpresa);
+                // Rollback dos dados inseridos
+                db.query('DELETE FROM con_contato WHERE con_id = ?', [contatoId]);
+                db.query('DELETE FROM end_endereco WHERE end_id = ?', [enderecoId]);
+                return res.status(500).json({
+                  error: "Erro ao cadastrar empresa.",
+                  details: errEmpresa.message,
+                  sqlMessage: errEmpresa.sqlMessage
+                });
+              }
+
+              console.log('Empresa inserida com ID:', resultEmpresa.insertId);
+              return res.status(201).json({
+                message: "Empresa cadastrada com sucesso!",
+                empresaId: resultEmpresa.insertId,
+              });
+            }
+          );
+        }
+      );
     }
   );
 };
