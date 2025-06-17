@@ -174,10 +174,6 @@ export const getEmpresaById = (req, res) => {
   });
 };
 
-export const editEmpresaById = (req, res) => {
-
-};
-
 export const deleteEmpresa = (req, res) => {
   const { id } = req.params;
 
@@ -203,4 +199,98 @@ export const deleteEmpresa = (req, res) => {
 
     return res.status(200).json({ message: "Empresa desativada com sucesso." });
   });
+};
+
+export const editEmpresaById = (req, res) => {
+  const { id } = req.params;
+  const { empInfo, address, con_telefone, emp_funcionario_telefone } = req.body;
+
+  if (!id) {
+    return res.status(400).json({ error: "ID da empresa não fornecido." });
+  }
+
+  // 1. Primeiro atualiza o endereço
+  const updateEnderecoQuery = `
+    UPDATE end_endereco
+    SET end_cep = ?, end_cidade = ?, end_bairro = ?, end_rua = ?
+    WHERE end_id = (SELECT endereco_fk FROM emp_empresa WHERE emp_id = ?)
+  `;
+
+  db.query(
+    updateEnderecoQuery,
+    [
+      address.end_cep,
+      address.end_cidade,
+      address.end_bairro,
+      address.end_rua,
+      id
+    ],
+    (errEndereco) => {
+      if (errEndereco) {
+        console.error("Erro ao atualizar endereço:", errEndereco);
+        return res.status(500).json({
+          error: "Erro ao atualizar endereço.",
+          details: errEndereco.message
+        });
+      }
+
+      // 2. Atualiza o contato (telefone da empresa)
+      const updateContatoQuery = `
+        UPDATE con_contato
+        SET con_telefone = ?
+        WHERE con_id = (SELECT contato_fk FROM emp_empresa WHERE emp_id = ?)
+      `;
+
+      db.query(
+        updateContatoQuery,
+        [con_telefone, id],
+        (errContato) => {
+          if (errContato) {
+            console.error("Erro ao atualizar contato:", errContato);
+            return res.status(500).json({
+              error: "Erro ao atualizar contato.",
+              details: errContato.message
+            });
+          }
+
+          // 3. Finalmente atualiza a empresa
+          const updateEmpresaQuery = `
+            UPDATE emp_empresa
+            SET 
+              emp_cnpj = ?,
+              emp_inscricaoEstado = ?,
+              emp_razaoSocial = ?,
+              emp_numero = ?,
+              emp_complemento = ?,
+              emp_funcionario_telefone = ?
+            WHERE emp_id = ?
+          `;
+
+          db.query(
+            updateEmpresaQuery,
+            [
+              empInfo.emp_cnpj,
+              empInfo.emp_inscricaoEstado || null,
+              empInfo.emp_razaoSocial,
+              empInfo.emp_numero || null,
+              empInfo.emp_complemento || null,
+              emp_funcionario_telefone,
+              id
+            ],
+            (errEmpresa) => {
+              if (errEmpresa) {
+                console.error("Erro ao atualizar empresa:", errEmpresa);
+                return res.status(500).json({
+                  error: "Erro ao atualizar empresa.",
+                  details: errEmpresa.message
+                });
+              }
+
+              return res.status(200).json({ message: "Empresa atualizada com sucesso!" });
+            }
+          );
+        }
+      );
+    }
+  );
 };
