@@ -88,3 +88,84 @@ export const createEmpresa = (req, res) => {
     }
   );
 };
+
+export const getEmpresas = (req, res) => {
+  const query = `
+    SELECT 
+      emp.*, 
+      end.end_cep, end.end_cidade, end.end_bairro, end.end_rua,
+      con.con_telefone
+    FROM emp_empresa emp
+    JOIN end_endereco end ON emp.endereco_fk = end.end_id
+    JOIN con_contato con ON emp.contato_fk = con.con_id 
+    WHERE emp.emp_ativo = true
+  `;
+
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error("Erro ao buscar empresas:", err);
+      return res.status(500).json({ error: "Erro ao buscar empresas." });
+    }
+
+    return res.status(200).json(results);
+  });
+};
+
+export const getEmpresaById = (req, res) => {
+  const { id } = req.params;
+
+  const query = `
+    SELECT 
+      emp.*, 
+      end.end_cep, end.end_cidade, end.end_bairro, end.end_rua,
+      con.con_telefone
+    FROM emp_empresa emp
+    JOIN end_endereco end ON emp.endereco_fk = end.end_id
+    JOIN con_contato con ON emp.contato_fk = con.con_id
+    WHERE emp.emp_id = ?
+  `;
+
+  db.query(query, [id], (err, results) => {
+    if (err) {
+      console.error("Erro ao buscar empresa:", err);
+      return res.status(500).json({ error: "Erro ao buscar empresa." });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ error: "Empresa não encontrada." });
+    }
+
+    return res.status(200).json(results[0]);
+  });
+};
+
+export const editEmpresaById = (req, res) => {
+
+};
+
+export const deleteEmpresa = (req, res) => {
+  const { id } = req.params;
+
+  if (!id) {
+    return res.status(400).json({ error: "ID da empresa não fornecido." });
+  }
+
+  const updateQuery = `
+    UPDATE emp_empresa 
+    SET emp_ativo = false 
+    WHERE emp_id = ?
+  `;
+
+  db.query(updateQuery, [id], (err, result) => {
+    if (err) {
+      console.error("Erro ao desativar empresa:", err);
+      return res.status(500).json({ error: "Erro ao desativar empresa." });
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Empresa não encontrada." });
+    }
+
+    return res.status(200).json({ message: "Empresa desativada com sucesso." });
+  });
+};
