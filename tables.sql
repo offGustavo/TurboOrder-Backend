@@ -1,6 +1,7 @@
 CREATE DATABASE IF NOT EXISTS turboOrder;
 USE turboOrder;
 
+-- Endereço
 CREATE TABLE end_endereco (
     end_id INT PRIMARY KEY AUTO_INCREMENT,
     end_cep INT NOT NULL,
@@ -9,24 +10,13 @@ CREATE TABLE end_endereco (
     end_rua VARCHAR(255) NOT NULL
 );
 
+-- Contato
 CREATE TABLE con_contato (
     con_id INT PRIMARY KEY AUTO_INCREMENT,
     con_telefone VARCHAR(20) NOT NULL
 );
 
-CREATE TABLE emp_empresa (
-    emp_id INT PRIMARY KEY AUTO_INCREMENT,
-    emp_cnpj VARCHAR(20) NOT NULL,
-    endereco_fk INT,
-    emp_inscricaoEstado VARCHAR(50),
-    emp_razaoSocial VARCHAR(255) NOT NULL,
-    contato_fk INT,
-    emp_numero INT,
-    emp_complemento VARCHAR(255),
-    FOREIGN KEY (endereco_fk) REFERENCES end_endereco(end_id),
-    FOREIGN KEY (contato_fk) REFERENCES con_contato(con_id)
-);
-
+-- Funcionário
 CREATE TABLE fun_funcionario (
     fun_id INT PRIMARY KEY AUTO_INCREMENT,
     fun_nome VARCHAR(255) NOT NULL,
@@ -41,6 +31,23 @@ CREATE TABLE fun_funcionario (
     FOREIGN KEY (admin_owner_id) REFERENCES fun_funcionario(fun_id)
 );
 
+-- Empresa
+CREATE TABLE emp_empresa (
+    emp_id INT PRIMARY KEY AUTO_INCREMENT,
+    emp_cnpj VARCHAR(20) NOT NULL,
+    endereco_fk INT,
+    emp_inscricaoEstado VARCHAR(50),
+    emp_razaoSocial VARCHAR(255) NOT NULL,
+    contato_fk INT,
+    emp_numero INT,
+    emp_complemento VARCHAR(255),
+    admin_owner_id INT,
+    FOREIGN KEY (endereco_fk) REFERENCES end_endereco(end_id),
+    FOREIGN KEY (contato_fk) REFERENCES con_contato(con_id),
+    FOREIGN KEY (admin_owner_id) REFERENCES fun_funcionario(fun_id)
+);
+
+-- Cliente
 CREATE TABLE cli_cliente (
     cli_id INT PRIMARY KEY AUTO_INCREMENT,
     cli_nome VARCHAR(255) NOT NULL,
@@ -58,6 +65,7 @@ CREATE TABLE cli_cliente (
     FOREIGN KEY (admin_owner_id) REFERENCES fun_funcionario(fun_id)
 );
 
+-- Produto
 CREATE TABLE pro_produto (
     pro_id INT PRIMARY KEY AUTO_INCREMENT,
     pro_nome VARCHAR(255) NOT NULL,
@@ -67,6 +75,7 @@ CREATE TABLE pro_produto (
     FOREIGN KEY (admin_owner_id) REFERENCES fun_funcionario(fun_id)
 );
 
+-- Cardápio
 CREATE TABLE car_cardapio (
     car_id INT PRIMARY KEY AUTO_INCREMENT,
     car_data DATE NOT NULL,
@@ -74,6 +83,7 @@ CREATE TABLE car_cardapio (
     FOREIGN KEY (admin_owner_id) REFERENCES fun_funcionario(fun_id)
 );
 
+-- Itens
 CREATE TABLE ite_itens (
     ite_id INT PRIMARY KEY AUTO_INCREMENT,
     arroz_fk INT,
@@ -83,15 +93,18 @@ CREATE TABLE ite_itens (
     acompanhamento_fk INT,
     carne01_fk INT,
     carne02_fk INT,
+    admin_owner_id INT,
     FOREIGN KEY (arroz_fk) REFERENCES pro_produto(pro_id),
     FOREIGN KEY (feijao_fk) REFERENCES pro_produto(pro_id),
     FOREIGN KEY (massa_fk) REFERENCES pro_produto(pro_id),
     FOREIGN KEY (salada_fk) REFERENCES pro_produto(pro_id),
     FOREIGN KEY (acompanhamento_fk) REFERENCES pro_produto(pro_id),
     FOREIGN KEY (carne01_fk) REFERENCES pro_produto(pro_id),
-    FOREIGN KEY (carne02_fk) REFERENCES pro_produto(pro_id)
+    FOREIGN KEY (carne02_fk) REFERENCES pro_produto(pro_id),
+    FOREIGN KEY (admin_owner_id) REFERENCES fun_funcionario(fun_id)
 );
 
+-- Pedido
 CREATE TABLE ped_pedido (
     ped_id INT PRIMARY KEY AUTO_INCREMENT,
     cliente_fk INT,
@@ -104,8 +117,8 @@ CREATE TABLE ped_pedido (
     ped_observacao TINYTEXT NULL,
     ped_desativado BOOLEAN NOT NULL DEFAULT FALSE,
     ped_ordem_dia INT NOT NULL DEFAULT 0,
-    ped_update_at  datetime DEFAULT current_timestamp(),
     ped_horarioRetirada TIME DEFAULT NULL,
+    ped_update_at DATETIME DEFAULT CURRENT_TIMESTAMP(),
     admin_owner_id INT NOT NULL,
     FOREIGN KEY (cliente_fk) REFERENCES cli_cliente(cli_id),
     FOREIGN KEY (funcionario_fk) REFERENCES fun_funcionario(fun_id),
@@ -113,10 +126,13 @@ CREATE TABLE ped_pedido (
     FOREIGN KEY (admin_owner_id) REFERENCES fun_funcionario(fun_id)
 );
 
+-- Cardápio do Dia
 CREATE TABLE dia_cardapioDia (
     dia_id INT PRIMARY KEY AUTO_INCREMENT,
     pro_fk INT NOT NULL,
     car_fk INT NOT NULL,
+    admin_owner_id INT,
     FOREIGN KEY (pro_fk) REFERENCES pro_produto(pro_id),
-    FOREIGN KEY (car_fk) REFERENCES car_cardapio(car_id)
+    FOREIGN KEY (car_fk) REFERENCES car_cardapio(car_id),
+    FOREIGN KEY (admin_owner_id) REFERENCES fun_funcionario(fun_id)
 );
