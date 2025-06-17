@@ -7,21 +7,19 @@ export const getProducts = (req, res) => {
   const offset = (page - 1) * limit;
 
 
-  const adminOwnerId = req.user.id;
-
   const q = `
         SELECT * FROM pro_produto 
-        WHERE pro_ativo = TRUE AND admin_owner_id = ?
+        WHERE pro_ativo = TRUE 
         LIMIT ? OFFSET ?
     `;
 
 
-  const countQuery = "SELECT COUNT(*) AS total FROM pro_produto WHERE pro_ativo = TRUE AND admin_owner_id = ?";
+  const countQuery = "SELECT COUNT(*) AS total FROM pro_produto WHERE pro_ativo = TRUE";
 
-  db.query(q, [adminOwnerId, limit, offset], (err, data) => {
+  db.query(q, [limit, offset], (err, data) => {
     if (err) return res.status(500).json(err);
 
-    db.query(countQuery, [adminOwnerId], (countErr, countResult) => {
+    db.query(countQuery, (countErr, countResult) => {
       if (countErr) return res.status(500).json(countErr);
 
       const totalItems = countResult[0].total;
