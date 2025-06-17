@@ -32,21 +32,45 @@ export const addProduct = (req, res) => {
 // FIX: Duplicate product in edit
 //NOTE: Verificar se existe um produto ativo com o mesmo nome e o mesmo tipo e impedir o cadastro
 export const updateProducts = (req, res) => {
-  const q = "UPDATE pro_produto SET pro_nome = ?, pro_tipo = ? WHERE pro_id = ?";
+  // Primeiro verifica se já existe um produto ativo com o mesmo nome e tipo
+  const checkQuery = `
+    SELECT pro_id FROM pro_produto 
+    WHERE pro_nome = ? AND pro_tipo = ? AND pro_ativo = true AND pro_id != ?
+  `;
 
-  const values = [
+  const checkValues = [
     req.body.pro_nome,
     req.body.pro_tipo,
     req.params.pro_id
   ];
 
-  db.query(q, values, (err) => {
+  db.query(checkQuery, checkValues, (err, results) => {
     if (err) return res.json(err);
 
-    return res.status(200).json("Produto atualizado com sucesso!");
+    // Se encontrou algum produto com mesmo nome e tipo, retorna erro
+    if (results.length > 0) {
+      return res.status(400).json({ error: "Já existe um produto ativo com este nome e tipo." });
+    }
+
+    // Se não encontrou, procede com a atualização
+    const updateQuery = `
+      UPDATE pro_produto 
+      SET pro_nome = ?, pro_tipo = ? 
+      WHERE pro_id = ?
+    `;
+
+    const updateValues = [
+      req.body.pro_nome,
+      req.body.pro_tipo,
+      req.params.pro_id
+    ];
+
+    db.query(updateQuery, updateValues, (err) => {
+      if (err) return res.json(err);
+      return res.status(200).json("Produto atualizado com sucesso!");
+    });
   });
 };
-
 
 export const deleteProducts = (req, res) => {
   const q = "UPDATE pro_produto SET pro_ativo = false WHERE pro_id = ?";
