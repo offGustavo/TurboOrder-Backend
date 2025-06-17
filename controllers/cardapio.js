@@ -36,18 +36,37 @@ export const saveOrUpdateCardapio = (req, res) => {
   }
 
   const agora = new Date();
-  const dataCardapio = new Date(data);
+
+  console.log("Data:", data);
+  const [ano, mes, dia] = data.split('-').map(Number);
+  const dataCardapio = new Date(ano, mes - 1, dia); // Corrige o fuso
 
   const hoje = new Date();
   hoje.setHours(0, 0, 0, 0);
-  const dataSomente = new Date(dataCardapio);
-  dataSomente.setHours(0, 0, 0, 0);
+  dataCardapio.setHours(0, 0, 0, 0);
 
+  console.log("Hoje (zerado):", hoje.toISOString());
+  console.log("Data do cardápio (zerado):", dataCardapio.toISOString());
+  const dataSomente = new Date(dataCardapio);
+  // dataSomente.setHours(0, 0, 0, 0);
+  hoje.setHours(0, 0, 0, 0); // Zera hora para comparar apenas a data
+  console.log("data: ")
+  console.log(data)
+  console.log("hoje: ")
+  console.log(hoje)
+  console.log("dataCardapio")
+  dataCardapio.setHours(0, 0, 0, 0); // Zera hora para comparar apenas a data
+  console.log(dataCardapio)
+
+  // TODO: tanformar isso em uma variavel que pode ser controlado pelo usuário
   const HORA_LIMITE = 18;
 
-  if (dataSomente < hoje) {
+  if (dataCardapio < hoje) {
+    console.log("Bloqueado: tentativa de alteração de data passada.");
     return res.status(403).json({ error: "Não é permitido alterar cardápios de dias passados." });
   }
+
+
 
   const limiteEdicao = new Date(dataCardapio);
   limiteEdicao.setHours(HORA_LIMITE, 0, 0, 0);
