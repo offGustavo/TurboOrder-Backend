@@ -9,7 +9,8 @@ export const getUserInfo = (req, res) => {
 
   db.query(sql, [userId], (err, results) => {
     if (err) {
-      return res.status(500).json({ Error: "Erro no banco de dados", Details: err });
+      console.error("Database error in getUserInfo:", err);
+      return res.status(500).json({ Error: "Erro no banco de dados", Details: err.message || err });
     }
 
     if (results.length === 0) {

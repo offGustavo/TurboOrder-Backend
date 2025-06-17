@@ -1,6 +1,7 @@
 import { db } from "../db.js";
 import bcrypt from "bcrypt";
 import { sendVerificationCode } from "../service/emailService.js";
+import jwt from "jsonwebtoken";
 
 export const addUser = (req, res) => {
   const { username, email, password } = req.body;
@@ -36,6 +37,9 @@ export const addUser = (req, res) => {
               console.error("Erro ao inserir dados no banco:", err);
               return res.status(500).json({ Error: "Erro ao inserir dados", Details: err.message });
             }
+            // Generate JWT token and set cookie
+            const token = jwt.sign({ id: result.insertId, username, role: "admin" }, process.env.JWT_SECRET || "jwt-secret-key", { expiresIn: "1d" });
+            res.cookie("token", token, { httpOnly: true });
             return res.json({ Status: "Código enviado para o e-mail!" });
           });
         })
