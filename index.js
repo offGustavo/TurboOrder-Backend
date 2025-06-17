@@ -19,7 +19,7 @@ app.use("/cardapio", cardapioRoutes);
 app.use("/produtos", produtosRoutes);
 app.use("/pedidos", pedidoRoutes);
 app.use('/status', statusRoutes)
-app.use('/empresa', statusRoutes)
+app.use('/empresa', empresaRoutes)
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
