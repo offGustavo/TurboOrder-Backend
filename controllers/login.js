@@ -22,8 +22,8 @@ export const loginUser = (req, res) => {
         if (result) {
           const { fun_id: id, fun_nome: username, fun_role: role, fun_foto: foto } = data[0];
           const token = jwt.sign({ id, username, role, foto }, "jwt-secret-key", { expiresIn: "1d" });
-          res.cookie("token", token);
-          return res.json({ Status: "Success" });
+          // Remove cookie setting, return token in response
+          return res.json({ Status: "Success", token });
         } else {
           return res.json({ Error: "Senha inválida" });
         }
