@@ -146,18 +146,10 @@ export const createPedido = (req, res) => {
           console.error("Erro ao inserir pedido:", err2);
           return res.status(500).json({ error: "Erro ao cadastrar pedido." });
         }
-        // Update ped_pedido with admin_owner_id
-        const updateAdminOwnerSql = "UPDATE ped_pedido SET admin_owner_id = ? WHERE ped_id = ?";
-        db.query(updateAdminOwnerSql, [admin_owner_id, result2.insertId], (err3) => {
-          if (err3) {
-            console.error("Erro ao atualizar admin_owner_id do pedido:", err3);
-            return res.status(500).json({ error: "Erro ao atualizar pedido." });
-          }
-          return res.status(201).json({
-            message: "Pedido cadastrado com sucesso!",
-            pedidoId: result2.insertId,
-            ordem_dia: ped_ordem_dia,
-          });
+        return res.status(201).json({
+          message: "Pedido cadastrado com sucesso!",
+          pedidoId: result2.insertId,
+          ordem_dia: ped_ordem_dia,
         });
       });
     });
@@ -168,8 +160,8 @@ export const getFiltredPedidos = (req, res) => {
 
   let { baseQuery, params } = filterOrder(req.query || {});
 
-  baseQuery += " AND (p.funcionario_fk = ? OR p.admin_owner_id = ?)";
-  params.push(req.user.fun_id, req.adminId);
+  baseQuery += " AND p.funcionario_fk = ?";
+  params.push(req.user.fun_id);
 
   db.query(baseQuery, params, (err, data) => {
     if (err) {
@@ -192,10 +184,10 @@ export const getPedidos = (req, res) => {
         JOIN cli_cliente c ON p.cliente_fk = c.cli_id
         JOIN fun_funcionario f ON p.funcionario_fk = f.fun_id
         JOIN ite_itens i ON p.ite_fk = i.ite_id
-        WHERE p.funcionario_fk = ? OR p.admin_owner_id = ?
+        WHERE p.funcionario_fk = ?
     `;
 
-  db.query(q, [req.user.fun_id, req.adminId], (err, data) => {
+  db.query(q, [req.user.fun_id], (err, data) => {
     if (err) {
       console.error("Erro ao buscar pedidos:", err);
       return res.status(500).json({ error: "Erro ao buscar pedidos." });
