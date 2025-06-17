@@ -23,6 +23,8 @@ CREATE TABLE IF NOT EXISTS emp_empresa (
     contato_fk INT,
     emp_numero INT,
     emp_complemento VARCHAR(255),
+    emp_funcionario_telefone VARCHAR(20) NULL,
+    emp_ativo BOOLEAN DEFAULT TRUE,
     FOREIGN KEY (endereco_fk) REFERENCES end_endereco(end_id),
     FOREIGN KEY (contato_fk) REFERENCES con_contato(con_id)
 );
