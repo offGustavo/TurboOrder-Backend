@@ -26,7 +26,6 @@ export const getCardapioByDate = (req, res) => {
 
 // POST/PUT - Cria ou atualiza cardápio
 
-// FIXME: A Validação não permite modificar cardápios do dia atual
 export const saveOrUpdateCardapio = (req, res) => {
   const data = req.body.data;
   const produtos = req.body.produtos;
@@ -39,7 +38,8 @@ export const saveOrUpdateCardapio = (req, res) => {
 
   console.log("Data:", data);
   const [ano, mes, dia] = data.split('-').map(Number);
-  const dataCardapio = new Date(ano, mes - 1, dia); // Corrige o fuso
+  //NOTE: Corrige o Fuso
+  const dataCardapio = new Date(ano, mes - 1, dia);
 
   const hoje = new Date();
   hoje.setHours(0, 0, 0, 0);
