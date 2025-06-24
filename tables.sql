@@ -109,3 +109,6 @@ CREATE TABLE IF NOT EXISTS dia_cardapioDia (
     FOREIGN KEY (pro_fk) REFERENCES pro_produto(pro_id),
     FOREIGN KEY (car_fk) REFERENCES car_cardapio(car_id)
 );
+
+-- Insert admin - senha admin
+INSERT INTO fun_funcionario (fun_nome, fun_email, fun_senha, fun_role, fun_admin_approved, fun_verificado, fun_ativo) VALUES ('Administrador', 'admin@empresa.com', '$2a$12$v3/nZRiwuubQdhi499KnHekzjniUjN0C28wEUX4VSuDNzZPSOr4Xy', 'admin', TRUE, TRUE, TRUE);
