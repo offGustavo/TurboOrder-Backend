@@ -36,9 +36,7 @@ CREATE TABLE fun_funcionario (
     fun_admin_approved BOOLEAN NOT NULL DEFAULT FALSE,
     fun_codigo_verificacao VARCHAR(6),
     fun_verificado BOOLEAN NOT NULL DEFAULT FALSE,
-    fun_ativo BOOLEAN NOT NULL DEFAULT TRUE,
-    admin_owner_id INT DEFAULT NULL,
-    FOREIGN KEY (admin_owner_id) REFERENCES fun_funcionario(fun_id)
+    fun_ativo BOOLEAN NOT NULL DEFAULT TRUE
 );
 
 CREATE TABLE cli_cliente (
@@ -50,28 +48,22 @@ CREATE TABLE cli_cliente (
     empresa_fk INT,
     cli_numero INT,
     cli_complemento VARCHAR(255),
-    cli_ativo BOOLEAN DEFAULT TRUE,
-    admin_owner_id INT,
+    cli_ativo BOOLEAN DEFAULT TRUE
     FOREIGN KEY (endereco_fk) REFERENCES end_endereco(end_id),
     FOREIGN KEY (contato_fk) REFERENCES con_contato(con_id),
-    FOREIGN KEY (empresa_fk) REFERENCES emp_empresa(emp_id),
-    FOREIGN KEY (admin_owner_id) REFERENCES fun_funcionario(fun_id)
+    FOREIGN KEY (empresa_fk) REFERENCES emp_empresa(emp_id)
 );
 
 CREATE TABLE pro_produto (
     pro_id INT PRIMARY KEY AUTO_INCREMENT,
     pro_nome VARCHAR(255) NOT NULL,
     pro_tipo VARCHAR(100),
-    pro_ativo BOOLEAN NOT NULL,
-    admin_owner_id INT,
-    FOREIGN KEY (admin_owner_id) REFERENCES fun_funcionario(fun_id)
+    pro_ativo BOOLEAN NOT NULL
 );
 
 CREATE TABLE car_cardapio (
     car_id INT PRIMARY KEY AUTO_INCREMENT,
-    car_data DATE NOT NULL,
-    admin_owner_id INT,
-    FOREIGN KEY (admin_owner_id) REFERENCES fun_funcionario(fun_id)
+    car_data DATE NOT NULL
 );
 
 CREATE TABLE ite_itens (
@@ -105,11 +97,9 @@ CREATE TABLE ped_pedido (
     ped_desativado BOOLEAN NOT NULL DEFAULT FALSE,
     ped_ordem_dia INT NOT NULL DEFAULT 0,
     ped_horarioRetirada TIME DEFAULT NULL,
-    admin_owner_id INT NOT NULL,
     FOREIGN KEY (cliente_fk) REFERENCES cli_cliente(cli_id),
     FOREIGN KEY (funcionario_fk) REFERENCES fun_funcionario(fun_id),
-    FOREIGN KEY (ite_fk) REFERENCES ite_itens(ite_id),
-    FOREIGN KEY (admin_owner_id) REFERENCES fun_funcionario(fun_id)
+    FOREIGN KEY (ite_fk) REFERENCES ite_itens(ite_id)
 );
 
 CREATE TABLE dia_cardapioDia (
