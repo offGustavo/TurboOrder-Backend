@@ -145,11 +145,11 @@ export const createPedido = (req, res) => {
           console.error("Erro ao inserir pedido:", err2);
           return res.status(500).json({ error: "Erro ao cadastrar pedido." });
         }
-      return res.status(201).json({
-        message: "Pedido cadastrado com sucesso!",
-        pedidoId: result2.insertId,
-        ordem_dia: ped_ordem_dia,
-      });
+        return res.status(201).json({
+          message: "Pedido cadastrado com sucesso!",
+          pedidoId: result2.insertId,
+          ordem_dia: ped_ordem_dia,
+        });
       });
     });
   });
@@ -183,7 +183,6 @@ export const getPedidos = (req, res) => {
         JOIN cli_cliente c ON p.cliente_fk = c.cli_id
         JOIN fun_funcionario f ON p.funcionario_fk = f.fun_id
         JOIN ite_itens i ON p.ite_fk = i.ite_id
-        WHERE p.funcionario_fk = ? OR p.admin_owner_id = ?
     `;
 
   db.query(q, [req.user.id], (err, data) => {
