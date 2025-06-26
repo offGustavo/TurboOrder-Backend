@@ -1,5 +1,42 @@
 import { db } from "../db.js";
 
+export const getProductsPagi = (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = 25;
+  const offset = (page - 1) * limit;
+
+  const q = `
+    SELECT * FROM pro_produto 
+    WHERE pro_ativo = TRUE
+    LIMIT ? OFFSET ?
+  `;
+
+  const countQuery = "SELECT COUNT(*) as total FROM pro_produto WHERE pro_ativo = TRUE";
+
+  // Primeiro obtemos o total de registros
+  db.query(countQuery, (err, countData) => {
+    if (err) return res.json(err);
+
+    const total = countData[0].total;
+    const totalPages = Math.ceil(total / limit);
+
+    // Depois obtemos os dados paginados
+    db.query(q, [limit, offset], (err, data) => {
+      if (err) return res.json(err);
+
+      return res.status(200).json({
+        data,
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalItems: total,
+          itemsPerPage: limit
+        }
+      });
+    });
+  });
+};
+
 export const getProducts = (_, res) => {
   const q = "SELECT * FROM pro_produto WHERE pro_ativo = TRUE";
 
