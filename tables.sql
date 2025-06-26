@@ -113,3 +113,48 @@ CREATE TABLE IF NOT EXISTS dia_cardapioDia (
 
 -- Insert admin - senha admin
 INSERT INTO fun_funcionario (fun_nome, fun_email, fun_senha, fun_role, fun_admin_approved, fun_verificado, fun_ativo) VALUES ('Administrador', 'admin@empresa.com', '$2a$12$v3/nZRiwuubQdhi499KnHekzjniUjN0C28wEUX4VSuDNzZPSOr4Xy', 'admin', TRUE, TRUE, TRUE);
+
+
+-- Inserções para a tabela pro_produto
+INSERT INTO pro_produto (pro_nome, pro_tipo, pro_ativo) VALUES
+-- Arroz
+('Arroz Branco', 'Arroz', true),
+('Arroz Integral', 'Arroz', true),
+('Arroz Selvagem', 'Arroz', true),
+('Arroz Arbóreo', 'Arroz', true),
+('Arroz Negro', 'Arroz', true),
+
+-- Feijão
+('Feijão Carioca', 'Feijão', true),
+('Feijão Preto', 'Feijão', true),
+('Feijão Branco', 'Feijão', true),
+('Feijão Vermelho', 'Feijão', true),
+('Feijão Fradinho', 'Feijão', true),
+
+-- Massa
+('Espaguete', 'Massa', true),
+('Penne', 'Massa', true),
+('Fusilli', 'Massa', true),
+('Lasanha', 'Massa', true),
+('Ravioli', 'Massa', true),
+
+-- Carne
+('Filé Mignon', 'Carne', true),
+('Alcatra', 'Carne', true),
+('Picanha', 'Carne', true),
+('Frango', 'Carne', true),
+('Peixe', 'Carne', true),
+
+-- Acompanhamento
+('Purê de Batata', 'Acompanhamento', true),
+('Farofa', 'Acompanhamento', true),
+('Polenta', 'Acompanhamento', true),
+('Legumes Grelhados', 'Acompanhamento', true),
+('Batata Rosti', 'Acompanhamento', true),
+
+-- Salada
+('Salada Verde', 'Salada', true),
+('Salada Caesar', 'Salada', true),
+('Salada de Tomate', 'Salada', true),
+('Salada de Repolho', 'Salada', true),
+('Salada de Grãos', 'Salada', true);
