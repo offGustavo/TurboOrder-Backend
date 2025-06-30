@@ -55,6 +55,23 @@ export const getProducts = (_, res) => {
   });
 };
 
+export const getProductsSearch = (req, res) => {
+  const { term } = req.query;
+
+  if (!term) {
+    return res.status(400).json({ error: "Termo de pesquisa não fornecido" });
+  }
+
+  const q = "SELECT * FROM pro_produto WHERE pro_ativo = TRUE AND pro_nome LIKE ?";
+  const searchTerm = `%${term}%`;
+
+  db.query(q, [searchTerm], (err, data) => {
+    if (err) return res.json(err);
+
+    return res.status(200).json(data);
+  });
+};
+
 export const addProduct = (req, res) => {
   const checkQuery = `
     SELECT pro_id FROM pro_produto 
