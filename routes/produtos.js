@@ -4,7 +4,7 @@ import { getProducts, addProduct, updateProducts, deleteProducts, getProductsPag
 const router = express.Router();
 
 router.get("/", getProducts);
-router.get('/', getProductsPagi)
+router.get('/paginador', getProductsPagi)
 router.post("/", addProduct);
 router.put("/:pro_id", updateProducts);
 router.delete("/:pro_id", deleteProducts);
