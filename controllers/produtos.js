@@ -2,16 +2,24 @@ import { db } from "../db.js";
 
 export const getProductsPagi = (req, res) => {
   const page = parseInt(req.query.page) || 1;
+  const filter = req.query.filter || '';
   const limit = 25;
   const offset = (page - 1) * limit;
 
-  const q = `
+  let q = `
     SELECT * FROM pro_produto 
     WHERE pro_ativo = TRUE
-    LIMIT ? OFFSET ?
   `;
 
-  const countQuery = "SELECT COUNT(*) as total FROM pro_produto WHERE pro_ativo = TRUE";
+  let countQuery = "SELECT COUNT(*) as total FROM pro_produto WHERE pro_ativo = TRUE";
+
+  // Adiciona filtro se existir
+  if (filter) {
+    q += ` AND pro_tipo = '${filter}'`;
+    countQuery += ` AND pro_tipo = '${filter}'`;
+  }
+
+  q += ` LIMIT ? OFFSET ?`;
 
   // Primeiro obtemos o total de registros
   db.query(countQuery, (err, countData) => {
