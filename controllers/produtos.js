@@ -11,22 +11,43 @@ export const getProducts = (_, res) => {
 };
 
 export const addProduct = (req, res) => {
-  const q = "INSERT INTO pro_produto (pro_nome, pro_tipo, pro_ativo) VALUES (?, ?, true)";
+  const checkQuery = `
+    SELECT pro_id FROM pro_produto 
+    WHERE pro_nome = ? AND pro_tipo = ? AND pro_ativo = true
+  `;
 
-  const values = [req.body.pro_nome, req.body.pro_tipo];
+  const checkValues = [
+    req.body.pro_nome,
+    req.body.pro_tipo
+  ];
 
-  db.query(q, values, (err, result) => {
+  db.query(checkQuery, checkValues, (err, results) => {
     if (err) return res.json(err);
 
-    const newProduct = {
-      pro_id: result.insertId,
-      pro_nome: req.body.pro_nome,
-      pro_tipo: req.body.pro_tipo,
-      pro_ativo: true
-    };
-    return res.status(200).json(newProduct);
+    if (results.length > 0) {
+      return res.status(400).json({ error: "Este item já foi cadastrado." });
+    }
+
+    const insertQuery = `
+      INSERT INTO pro_produto (pro_nome, pro_tipo, pro_ativo) 
+      VALUES (?, ?, true)
+    `;
+
+    const insertValues = [req.body.pro_nome, req.body.pro_tipo];
+
+    db.query(insertQuery, insertValues, (err, result) => {
+      if (err) return res.json(err);
+
+      const newProduct = {
+        pro_id: result.insertId,
+        pro_nome: req.body.pro_nome,
+        pro_tipo: req.body.pro_tipo,
+        pro_ativo: true
+      };
+      return res.status(200).json(newProduct);
+    });
   });
-};
+};;
 
 
 //NOTE: Verificar se existe um produto ativo com o mesmo nome e o mesmo tipo e impedir o cadastro
