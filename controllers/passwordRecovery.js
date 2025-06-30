@@ -14,7 +14,7 @@ export const forgotPassword = (req, res) => {
   }
 
   const sqlCheck = `
-    SELECT fun_id, fun_verificado, fun_role, admin_owner_id, fun_email
+    SELECT fun_id, fun_verificado, fun_role, fun_email
     FROM fun_funcionario
     WHERE fun_email = ? AND fun_ativo = TRUE
   `;
@@ -53,20 +53,7 @@ export const forgotPassword = (req, res) => {
 
         sendVerificationCode(email, emailHtml)
           .then(() => {
-            // Após enviar o código para o admin, verificar se há um admin_owner_id para notificar o admin principal
-            if (user.admin_owner_id) {
-              const sqlMainAdmin = `
-                SELECT fun_email FROM fun_funcionario WHERE fun_id = ? AND fun_ativo = TRUE
-              `;
-              db.query(sqlMainAdmin, [user.admin_owner_id], (errMain, mainAdminResults) => {
-                if (!errMain && mainAdminResults.length > 0) {
-                  const mainAdminEmail = mainAdminResults[0].fun_email;
-                  sendAdminNotification(mainAdminEmail, email).catch(() => {
-                    // Logar erro ou ignorar
-                  });
-                }
-              });
-            }
+            // Após enviar o código para o admin, não há mais admin_owner_id para notificar
             return res.json({ message: "Solicitação de redefinição de senha registrada. Um e-mail com o link de redefinição foi enviado ao administrador responsável." });
           })
           .catch((emailErr) =>
@@ -79,31 +66,8 @@ export const forgotPassword = (req, res) => {
         return res.status(403).json({ error: "Acesso negado. Usuário não é administrador." });
       }
 
-      // Notificar admin_owner_id
-      const adminId = user.admin_owner_id;
-      if (!adminId) {
-        return res.status(400).json({ error: "Usuário não possui administrador responsável." });
-      }
-
-      const sqlAdmin = `
-        SELECT fun_email FROM fun_funcionario WHERE fun_id = ? AND fun_ativo = TRUE
-      `;
-
-      db.query(sqlAdmin, [adminId], (errAdmin, adminResults) => {
-        if (errAdmin) return res.status(500).json({ error: "Erro no banco de dados", details: errAdmin.message });
-
-        if (adminResults.length === 0) {
-          return res.status(404).json({ error: "Administrador responsável não encontrado." });
-        }
-
-        const adminEmail = adminResults[0].fun_email;
-
-        sendAdminNotification(adminEmail, email)
-          .then(() => res.json({ message: "Solicitação de redefinição de senha registrada. Um e-mail com o link de redefinição foi enviado ao administrador responsável." }))
-          .catch((emailErr) =>
-            res.status(500).json({ error: "Erro ao enviar notificação para o administrador", details: emailErr.message })
-          );
-      });
+      // Notificar admin_owner_id removido pois não existe mais
+      return res.status(403).json({ error: "Acesso negado. Usuário não é administrador." });
     }
   });
 };
