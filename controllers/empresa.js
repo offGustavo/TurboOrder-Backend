@@ -316,16 +316,16 @@ export const getPedidosPorTelefoneFuncionario = (req, res) => {
   const firstDayStr = firstDay.toISOString().split('T')[0];
   const lastDayStr = lastDay.toISOString().split('T')[0];
 
-  let q = `
-        SELECT p.*,
-               c.cli_nome, c.cli_sobrenome,
-               f.fun_nome,
-               i.*
-        FROM ped_pedido p
-        JOIN cli_cliente c ON p.cliente_fk = c.cli_id
-        JOIN fun_funcionario f ON p.funcionario_fk = f.fun_id
-        JOIN ite_itens i ON p.ite_fk = i.ite_id
-    `;
+  // let q = `
+  //       SELECT p.*,
+  //              c.cli_nome, c.cli_sobrenome,
+  //              f.fun_nome,
+  //              i.*
+  //       FROM ped_pedido p
+  //       JOIN cli_cliente c ON p.cliente_fk = c.cli_id
+  //       JOIN fun_funcionario f ON p.funcionario_fk = f.fun_id
+  //       JOIN ite_itens i ON p.ite_fk = i.ite_id
+  //   `;
 
   let q = `
     SELECT 
