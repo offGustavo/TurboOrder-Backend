@@ -28,7 +28,7 @@ export const createEmpresa = (req, res) => {
     return res.status(400).json({ error: "Todos os campos obrigatórios devem ser preenchidos." });
   }
 
-  // 1. Inserir endereço
+
   const insertEnderecoQuery = `
     INSERT INTO end_endereco (end_cep, end_cidade, end_bairro, end_rua)
     VALUES (?, ?, ?, ?)
@@ -298,18 +298,14 @@ export const editEmpresaById = (req, res) => {
 export const getPedidosPorTelefoneFuncionario = (req, res) => {
   let { telefone } = req.params;
 
-  console.log('Telefone recebido:', telefone); // Adicionado para depuração
-
-  // Remove todos os caracteres não numéricos
+  // Remove todos os caracteres não numéricos e verifica se tem tamanho adequado
   telefone = telefone.replace(/\D/g, '');
 
-  if (!telefone) {
-    return res.status(400).json({ error: "Telefone do funcionário não fornecido." });
+  if (!telefone || telefone.length < 10 || telefone.length > 11) {
+    return res.status(400).json({
+      error: "Telefone do funcionário inválido. Deve conter 10 ou 11 dígitos."
+    });
   }
-
-  // Restante do código permanece o mesmo...
-  console.log('Telefone formatado:', telefone); // Adicionado para depuração
-  // ...
 
   // Obter primeiro e último dia do mês atual
   const now = new Date();
@@ -321,25 +317,66 @@ export const getPedidosPorTelefoneFuncionario = (req, res) => {
   const lastDayStr = lastDay.toISOString().split('T')[0];
 
   let q = `
+        SELECT p.*,
+               c.cli_nome, c.cli_sobrenome,
+               f.fun_nome,
+               i.*
+        FROM ped_pedido p
+        JOIN cli_cliente c ON p.cliente_fk = c.cli_id
+        JOIN fun_funcionario f ON p.funcionario_fk = f.fun_id
+        JOIN ite_itens i ON p.ite_fk = i.ite_id
+    `;
+
+  let q = `
     SELECT 
-      p.*,
+      p.ped_id,
+      p.ped_status,
+      p.ped_valor,
+      p.ped_data,
+      p.ped_tipoPagamento,
+      p.ped_observacao,
+      p.ped_ordem_dia,
+      p.ped_horarioRetirada,
       c.cli_nome, 
       c.cli_sobrenome,
       f.fun_nome,
-      i.*,
       emp.emp_razaoSocial,
-      emp.emp_id
+      emp.emp_id,
+      -- Produtos do item
+      arroz.pro_nome AS arroz_nome,
+      feijao.pro_nome AS feijao_nome,
+      massa.pro_nome AS massa_nome,
+      salada.pro_nome AS salada_nome,
+      acompanhamento.pro_nome AS acompanhamento_nome,
+      carne01.pro_nome AS carne01_nome,
+      carne02.pro_nome AS carne02_nome
     FROM ped_pedido p
     JOIN cli_cliente c ON p.cliente_fk = c.cli_id
     JOIN fun_funcionario f ON p.funcionario_fk = f.fun_id
     JOIN ite_itens i ON p.ite_fk = i.ite_id
     JOIN emp_empresa emp ON c.empresa_fk = emp.emp_id
-    WHERE emp.emp_funcionario_telefone = ?
-    AND p.ped_data BETWEEN ? AND ?
-    ORDER BY p.ped_data DESC
+    -- Joins para os produtos
+    LEFT JOIN pro_produto arroz ON i.arroz_fk = arroz.pro_id
+    LEFT JOIN pro_produto feijao ON i.feijao_fk = feijao.pro_id
+    LEFT JOIN pro_produto massa ON i.massa_fk = massa.pro_id
+    LEFT JOIN pro_produto salada ON i.salada_fk = salada.pro_id
+    LEFT JOIN pro_produto acompanhamento ON i.acompanhamento_fk = acompanhamento.pro_id
+    LEFT JOIN pro_produto carne01 ON i.carne01_fk = carne01.pro_id
+    LEFT JOIN pro_produto carne02 ON i.carne02_fk = carne02.pro_id
+    WHERE 
+      -- Verifica se o telefone bate (com ou sem máscara)
+      (emp.emp_funcionario_telefone LIKE ? OR 
+       REPLACE(emp.emp_funcionario_telefone, '-', '') LIKE ? OR
+       REPLACE(REPLACE(REPLACE(emp.emp_funcionario_telefone, '(', ''), ')', ''), '-', '') LIKE ?)
+      AND p.ped_data BETWEEN ? AND ?
+      AND p.ped_desativado = 0
+    ORDER BY p.ped_data DESC, p.ped_ordem_dia ASC
   `;
 
-  db.query(q, [telefone, firstDayStr, lastDayStr], (err, data) => {
+  // Prepara os parâmetros para o LIKE (com % no final para pegar qualquer formato)
+  const telefoneLike = `%${telefone}%`;
+
+  db.query(q, [telefoneLike, telefoneLike, telefoneLike, firstDayStr, lastDayStr], (err, data) => {
     if (err) {
       console.error("Erro ao buscar pedidos por telefone do funcionário:", err);
       return res.status(500).json({
@@ -358,52 +395,9 @@ export const getPedidosPorTelefoneFuncionario = (req, res) => {
   });
 };
 
-export const getPedidosEmpresaMesAtual = (req, res) => {
-  const { id } = req.params;
-
-  if (!id) {
-    return res.status(400).json({ error: "ID da empresa não fornecido." });
-  }
-
-  // Obter primeiro e último dia do mês atual
-  const now = new Date();
-  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-
-  // Formatar datas para o formato MySQL (YYYY-MM-DD)
-  const firstDayStr = firstDay.toISOString().split('T')[0];
-  const lastDayStr = lastDay.toISOString().split('T')[0];
-
-  let q = `
-    SELECT 
-      p.*,
-      c.cli_nome, 
-      c.cli_sobrenome,
-      f.fun_nome,
-      i.*,
-      emp.emp_razaoSocial
-    FROM ped_pedido p
-    JOIN cli_cliente c ON p.cliente_fk = c.cli_id
-    JOIN fun_funcionario f ON p.funcionario_fk = f.fun_id
-    JOIN ite_itens i ON p.ite_fk = i.ite_id
-    JOIN emp_empresa emp ON c.empresa_fk = emp.emp_id
-    WHERE emp.emp_id = ?
-    AND p.ped_data BETWEEN ? AND ?
-    ORDER BY p.ped_data DESC
-  `;
-
-  db.query(q, [id, firstDayStr, lastDayStr], (err, data) => {
-    if (err) {
-      console.error("Erro ao buscar pedidos da empresa:", err);
-      return res.status(500).json({ error: "Erro ao buscar pedidos da empresa." });
-    }
-
-    // Retorna tanto a contagem quanto os pedidos em si
-    const response = {
-      totalPedidos: data.length,
-      pedidos: data
-    };
-
-    return res.status(200).json(response);
-  });
-};
+// SELECT ped.*
+// FROM ped_pedido ped
+// JOIN cli_cliente cli ON ped.cliente_fk = cli.cli_id
+// JOIN con_contato con ON cli.contato_fk = con.con_id
+// WHERE 
+//     con.con_telefone = 1111111111;
