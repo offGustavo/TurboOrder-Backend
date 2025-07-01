@@ -103,6 +103,18 @@ CREATE TABLE IF NOT EXISTS ped_pedido (
     FOREIGN KEY (ite_fk) REFERENCES ite_itens(ite_id)
 );
 
+ALTER TABLE ped_pedido
+ADD COLUMN ped_cli_nome VARCHAR(255) NULL,
+ADD COLUMN ped_cli_sobrenome VARCHAR(255) NULL,
+ADD COLUMN ped_cli_telefone VARCHAR(20) NULL,
+ADD COLUMN ped_cli_end_cep INT NULL,
+ADD COLUMN ped_cli_end_cidade VARCHAR(255) NULL,
+ADD COLUMN ped_cli_end_bairro VARCHAR(255) NULL,
+ADD COLUMN ped_cli_end_rua VARCHAR(255) NULL,
+ADD COLUMN ped_cli_numero INT NULL,
+ADD COLUMN ped_cli_complemento VARCHAR(255) NULL;
+
+
 CREATE TABLE IF NOT EXISTS dia_cardapioDia (
     dia_id INT PRIMARY KEY AUTO_INCREMENT,
     pro_fk INT NOT NULL,
