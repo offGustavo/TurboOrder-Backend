@@ -294,3 +294,116 @@ export const editEmpresaById = (req, res) => {
     }
   );
 };
+
+export const getPedidosPorTelefoneFuncionario = (req, res) => {
+  let { telefone } = req.params;
+
+  console.log('Telefone recebido:', telefone); // Adicionado para depuração
+
+  // Remove todos os caracteres não numéricos
+  telefone = telefone.replace(/\D/g, '');
+
+  if (!telefone) {
+    return res.status(400).json({ error: "Telefone do funcionário não fornecido." });
+  }
+
+  // Restante do código permanece o mesmo...
+  console.log('Telefone formatado:', telefone); // Adicionado para depuração
+  // ...
+
+  // Obter primeiro e último dia do mês atual
+  const now = new Date();
+  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+  // Formatar datas para o formato MySQL (YYYY-MM-DD)
+  const firstDayStr = firstDay.toISOString().split('T')[0];
+  const lastDayStr = lastDay.toISOString().split('T')[0];
+
+  let q = `
+    SELECT 
+      p.*,
+      c.cli_nome, 
+      c.cli_sobrenome,
+      f.fun_nome,
+      i.*,
+      emp.emp_razaoSocial,
+      emp.emp_id
+    FROM ped_pedido p
+    JOIN cli_cliente c ON p.cliente_fk = c.cli_id
+    JOIN fun_funcionario f ON p.funcionario_fk = f.fun_id
+    JOIN ite_itens i ON p.ite_fk = i.ite_id
+    JOIN emp_empresa emp ON c.empresa_fk = emp.emp_id
+    WHERE emp.emp_funcionario_telefone = ?
+    AND p.ped_data BETWEEN ? AND ?
+    ORDER BY p.ped_data DESC
+  `;
+
+  db.query(q, [telefone, firstDayStr, lastDayStr], (err, data) => {
+    if (err) {
+      console.error("Erro ao buscar pedidos por telefone do funcionário:", err);
+      return res.status(500).json({
+        error: "Erro ao buscar pedidos por telefone do funcionário.",
+        details: err.message
+      });
+    }
+
+    // Retorna tanto a contagem quanto os pedidos em si
+    const response = {
+      totalPedidos: data.length,
+      pedidos: data
+    };
+
+    return res.status(200).json(response);
+  });
+};
+
+export const getPedidosEmpresaMesAtual = (req, res) => {
+  const { id } = req.params;
+
+  if (!id) {
+    return res.status(400).json({ error: "ID da empresa não fornecido." });
+  }
+
+  // Obter primeiro e último dia do mês atual
+  const now = new Date();
+  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+  // Formatar datas para o formato MySQL (YYYY-MM-DD)
+  const firstDayStr = firstDay.toISOString().split('T')[0];
+  const lastDayStr = lastDay.toISOString().split('T')[0];
+
+  let q = `
+    SELECT 
+      p.*,
+      c.cli_nome, 
+      c.cli_sobrenome,
+      f.fun_nome,
+      i.*,
+      emp.emp_razaoSocial
+    FROM ped_pedido p
+    JOIN cli_cliente c ON p.cliente_fk = c.cli_id
+    JOIN fun_funcionario f ON p.funcionario_fk = f.fun_id
+    JOIN ite_itens i ON p.ite_fk = i.ite_id
+    JOIN emp_empresa emp ON c.empresa_fk = emp.emp_id
+    WHERE emp.emp_id = ?
+    AND p.ped_data BETWEEN ? AND ?
+    ORDER BY p.ped_data DESC
+  `;
+
+  db.query(q, [id, firstDayStr, lastDayStr], (err, data) => {
+    if (err) {
+      console.error("Erro ao buscar pedidos da empresa:", err);
+      return res.status(500).json({ error: "Erro ao buscar pedidos da empresa." });
+    }
+
+    // Retorna tanto a contagem quanto os pedidos em si
+    const response = {
+      totalPedidos: data.length,
+      pedidos: data
+    };
+
+    return res.status(200).json(response);
+  });
+};

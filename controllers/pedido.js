@@ -5,13 +5,12 @@ const filterOrder = (query) => {
 
   let baseQuery = `
     SELECT p.ped_id, p.ped_status, p.ped_valor, p.ped_data, p.ped_tipoPagamento,
-           p.ped_desativado, p.ped_ordem_dia, p.ped_horarioRetirada, p.ped_observacao,
-           p.ped_cli_nome, p.ped_cli_sobrenome, p.ped_cli_telefone,
-           p.ped_cli_end_cep, p.ped_cli_end_cidade, p.ped_cli_end_bairro, p.ped_cli_end_rua,
-           p.ped_cli_numero, p.ped_cli_complemento,
+           p.ped_desativado, p.ped_ordem_dia,
+           c.cli_nome, c.cli_sobrenome,
            f.fun_nome,
            i.*
     FROM ped_pedido p
+    JOIN cli_cliente c ON p.cliente_fk = c.cli_id
     JOIN fun_funcionario f ON p.funcionario_fk = f.fun_id
     JOIN ite_itens i ON p.ite_fk = i.ite_id
   `;
@@ -20,8 +19,8 @@ const filterOrder = (query) => {
   const params = [];
 
   if (customerName) {
-    conditions.push("(c.cli_nome LIKE ? OR c.cli_sobrenome LIKE ? OR p.ped_cli_nome LIKE ? OR p.ped_cli_sobrenome LIKE ?)");
-    params.push(`%${customerName}%`, `%${customerName}%`, `%${customerName}%`, `%${customerName}%`);
+    conditions.push("(c.cli_nome LIKE ? OR c.cli_sobrenome LIKE ?)");
+    params.push(`%${customerName}%`, `%${customerName}%`);
   }
 
   if (orderDate) {
@@ -56,23 +55,13 @@ export const createPedido = (req, res) => {
     ped_tipoPagamento,
     ped_horarioRetirada,
     ped_observacao,
-    ped_desativado = 0,
-    // New fields for unregistered customers
-    cli_nome,
-    cli_sobrenome,
-    cli_telefone,
-    cli_end_cep,
-    cli_end_cidade,
-    cli_end_bairro,
-    cli_end_rua,
-    cli_numero,
-    cli_complemento
+    ped_desativado = 0
   } = req.body;
 
   const funcionario_fk = req.user.id;
 
   if (
-    (!cliente_fk && (!cli_nome || !cli_telefone)) ||
+    !cliente_fk ||
     !funcionario_fk ||
     !itens ||
     !ped_status ||
@@ -134,16 +123,13 @@ export const createPedido = (req, res) => {
       const insertPedidoQuery = `
         INSERT INTO ped_pedido (
           cliente_fk, funcionario_fk, ite_fk, ped_status, ped_valor, ped_data,
-          ped_tipoPagamento, ped_observacao, ped_desativado, ped_ordem_dia, ped_horarioRetirada,
-          ped_cli_nome, ped_cli_sobrenome, ped_cli_telefone,
-          ped_cli_end_cep, ped_cli_end_cidade, ped_cli_end_bairro, ped_cli_end_rua,
-          ped_cli_numero, ped_cli_complemento
+          ped_tipoPagamento, ped_observacao, ped_desativado, ped_ordem_dia, ped_horarioRetirada
         )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `;
 
       db.query(insertPedidoQuery, [
-        cliente_fk || null,
+        cliente_fk,
         funcionario_fk,
         ite_fk,
         ped_status,
@@ -153,17 +139,7 @@ export const createPedido = (req, res) => {
         ped_observacao,
         ped_desativado,
         ped_ordem_dia,
-        horarioRetirada,
-        // Customer data (registered or unregistered)
-        cliente_fk ? null : cli_nome,
-        cliente_fk ? null : cli_sobrenome,
-        cliente_fk ? null : cli_telefone,
-        cliente_fk ? null : cli_end_cep,
-        cliente_fk ? null : cli_end_cidade,
-        cliente_fk ? null : cli_end_bairro,
-        cliente_fk ? null : cli_end_rua,
-        cliente_fk ? null : cli_numero,
-        cliente_fk ? null : cli_complemento
+        horarioRetirada
       ], (err2, result2) => {
         if (err2) {
           console.error("Erro ao inserir pedido:", err2);
@@ -179,8 +155,8 @@ export const createPedido = (req, res) => {
   });
 };
 
-// Update getFiltredPedidos and getPedidos to handle both registered and unregistered customers
 export const getFiltredPedidos = (req, res) => {
+
   let { baseQuery, params } = filterOrder(req.query || {});
 
   baseQuery += " AND p.funcionario_fk = ?";
@@ -192,33 +168,22 @@ export const getFiltredPedidos = (req, res) => {
       return res.status(500).json({ error: "Erro ao buscar pedidos." });
     }
 
-    // Format the response to return consistent customer data
-    const formattedData = data.map(pedido => ({
-      ...pedido,
-      cli_nome: pedido.cli_nome || pedido.ped_cli_nome,
-      cli_sobrenome: pedido.cli_sobrenome || pedido.ped_cli_sobrenome,
-      con_telefone: pedido.cli_telefone || pedido.ped_cli_telefone,
-      cli_numero: pedido.cli_numero || pedido.ped_cli_numero,
-      cli_complemento: pedido.cli_complemento || pedido.ped_cli_complemento,
-      end_cep: pedido.end_cep || pedido.ped_cli_end_cep,
-      end_cidade: pedido.end_cidade || pedido.ped_cli_end_cidade,
-      end_bairro: pedido.end_bairro || pedido.ped_cli_end_bairro,
-      end_rua: pedido.end_rua || pedido.ped_cli_end_rua
-    }));
-
-    return res.status(200).json(formattedData);
+    return res.status(200).json(data);
   });
 };
 
 export const getPedidos = (req, res) => {
+
   let q = `
-    SELECT p.*,
-           f.fun_nome,
-           i.*
-    FROM ped_pedido p
-    JOIN fun_funcionario f ON p.funcionario_fk = f.fun_id
-    JOIN ite_itens i ON p.ite_fk = i.ite_id
-  `;
+        SELECT p.*,
+               c.cli_nome, c.cli_sobrenome,
+               f.fun_nome,
+               i.*
+        FROM ped_pedido p
+        JOIN cli_cliente c ON p.cliente_fk = c.cli_id
+        JOIN fun_funcionario f ON p.funcionario_fk = f.fun_id
+        JOIN ite_itens i ON p.ite_fk = i.ite_id
+    `;
 
   db.query(q, [req.user.id], (err, data) => {
     if (err) {
@@ -226,26 +191,12 @@ export const getPedidos = (req, res) => {
       return res.status(500).json({ error: "Erro ao buscar pedidos." });
     }
 
-    // Format the response to return consistent customer data
-    const formattedData = data.map(pedido => ({
-      ...pedido,
-      cli_nome: pedido.cli_nome || pedido.ped_cli_nome,
-      cli_sobrenome: pedido.cli_sobrenome || pedido.ped_cli_sobrenome,
-      con_telefone: pedido.cli_telefone || pedido.ped_cli_telefone,
-      cli_numero: pedido.cli_numero || pedido.ped_cli_numero,
-      cli_complemento: pedido.cli_complemento || pedido.ped_cli_complemento,
-      end_cep: pedido.end_cep || pedido.ped_cli_end_cep,
-      end_cidade: pedido.end_cidade || pedido.ped_cli_end_cidade,
-      end_bairro: pedido.end_bairro || pedido.ped_cli_end_bairro,
-      end_rua: pedido.end_rua || pedido.ped_cli_end_rua
-    }));
-
-    return res.status(200).json(formattedData);
+    return res.status(200).json(data);
   });
 };
 
-// Update editPedidos to handle customer data updates
 export const editPedidos = (req, res) => {
+
   const { id } = req.params;
   const {
     cliente_fk,
@@ -257,20 +208,10 @@ export const editPedidos = (req, res) => {
     ped_tipoPagamento,
     ped_horarioRetirada,
     ped_observacao,
-    ped_desativado = 0,
-    // New fields for unregistered customers
-    cli_nome,
-    cli_sobrenome,
-    cli_telefone,
-    cli_end_cep,
-    cli_end_cidade,
-    cli_end_bairro,
-    cli_end_rua,
-    cli_numero,
-    cli_complemento
+    ped_desativado = 0
   } = req.body;
 
-  if ((!cliente_fk && (!cli_nome || !cli_telefone)) || !funcionario_fk || !itens || !ped_status || !ped_valor || !ped_data || !ped_tipoPagamento) {
+  if (!cliente_fk || !funcionario_fk || !itens || !ped_status || !ped_valor || !ped_data || !ped_tipoPagamento) {
     return res.status(400).json({ error: "Todos os campos obrigatórios devem ser preenchidos." });
   }
 
@@ -322,15 +263,12 @@ export const editPedidos = (req, res) => {
       const updatePedidoQuery = `
         UPDATE ped_pedido
         SET cliente_fk = ?, funcionario_fk = ?, ped_status = ?, ped_valor = ?, ped_data = ?, ped_tipoPagamento = ?,
-            ped_observacao = ?, ped_desativado = ?, ped_horarioRetirada = ?,
-            ped_cli_nome = ?, ped_cli_sobrenome = ?, ped_cli_telefone = ?,
-            ped_cli_end_cep = ?, ped_cli_end_cidade = ?, ped_cli_end_bairro = ?, ped_cli_end_rua = ?,
-            ped_cli_numero = ?, ped_cli_complemento = ?
+            ped_observacao = ?, ped_desativado = ?, ped_horarioRetirada = ?
         WHERE ped_id = ?
       `;
 
       db.query(updatePedidoQuery, [
-        cliente_fk || null,
+        cliente_fk,
         funcionario_fk,
         ped_status,
         ped_valor,
@@ -339,16 +277,6 @@ export const editPedidos = (req, res) => {
         ped_observacao,
         ped_desativado,
         horarioRetiradaTratado,
-        // Customer data (registered or unregistered)
-        cliente_fk ? null : cli_nome,
-        cliente_fk ? null : cli_sobrenome,
-        cliente_fk ? null : cli_telefone,
-        cliente_fk ? null : cli_end_cep,
-        cliente_fk ? null : cli_end_cidade,
-        cliente_fk ? null : cli_end_bairro,
-        cliente_fk ? null : cli_end_rua,
-        cliente_fk ? null : cli_numero,
-        cliente_fk ? null : cli_complemento,
         id
       ], (err3, result3) => {
         if (err3) {
