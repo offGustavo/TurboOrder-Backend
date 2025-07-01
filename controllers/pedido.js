@@ -48,7 +48,6 @@ const filterOrder = (query) => {
 export const createPedido = (req, res) => {
   const {
     cliente_fk,
-    funcionario_fk,
     itens,
     ped_status,
     ped_valor,
@@ -58,6 +57,8 @@ export const createPedido = (req, res) => {
     ped_observacao,
     ped_desativado = 0
   } = req.body;
+
+  const funcionario_fk = req.user.id;
 
   if (
     !cliente_fk ||
@@ -124,7 +125,7 @@ export const createPedido = (req, res) => {
           cliente_fk, funcionario_fk, ite_fk, ped_status, ped_valor, ped_data,
           ped_tipoPagamento, ped_observacao, ped_desativado, ped_ordem_dia, ped_horarioRetirada
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `;
 
       db.query(insertPedidoQuery, [
@@ -156,7 +157,10 @@ export const createPedido = (req, res) => {
 
 export const getFiltredPedidos = (req, res) => {
 
-  const { baseQuery, params } = filterOrder(req.query || {});
+  let { baseQuery, params } = filterOrder(req.query || {});
+
+  baseQuery += " AND p.funcionario_fk = ?";
+  params.push(req.user.id);
 
   db.query(baseQuery, params, (err, data) => {
     if (err) {
@@ -170,7 +174,7 @@ export const getFiltredPedidos = (req, res) => {
 
 export const getPedidos = (req, res) => {
 
-  const q = `
+  let q = `
         SELECT p.*,
                c.cli_nome, c.cli_sobrenome,
                f.fun_nome,
@@ -181,7 +185,7 @@ export const getPedidos = (req, res) => {
         JOIN ite_itens i ON p.ite_fk = i.ite_id
     `;
 
-  db.query(q, (err, data) => {
+  db.query(q, [req.user.id], (err, data) => {
     if (err) {
       console.error("Erro ao buscar pedidos:", err);
       return res.status(500).json({ error: "Erro ao buscar pedidos." });
@@ -192,6 +196,7 @@ export const getPedidos = (req, res) => {
 };
 
 export const editPedidos = (req, res) => {
+
   const { id } = req.params;
   const {
     cliente_fk,
@@ -297,22 +302,95 @@ export const updatePedidoStatus = (req, res) => {
     return res.status(400).json({ error: "O novo status é obrigatório." });
   }
 
-  const query = "UPDATE ped_pedido p SET p.ped_status = ? WHERE p.ped_id = ?";
+  const selectQuery = "SELECT ped_status, ped_updated_at FROM ped_pedido WHERE ped_id = ?";
 
-  db.query(query, [status, id], (err, result) => {
-    if (err) {
-      console.error("Erro ao atualizar status do pedido:", err);
-      return res
-        .status(500)
-        .json({ error: "Erro ao atualizar status do pedido." });
+  db.query(selectQuery, [id], (selectErr, results) => {
+    if (selectErr) {
+      console.error("Erro ao buscar pedido:", selectErr);
+      return res.status(500).json({ error: "Erro ao buscar pedido." });
     }
 
-    if (result.affectedRows === 0) {
+    if (results.length === 0) {
       return res.status(404).json({ error: "Pedido não encontrado." });
     }
 
-    return res
-      .status(200)
-      .json({ message: "Status do pedido atualizado com sucesso!" });
+    const { ped_status: currentStatus, ped_updated_at } = results[0];
+    const isReactivating = (currentStatus === 'Concluído' || currentStatus === 'Cancelado') && status === 'Em Andamento';
+    const isConcludedChange = currentStatus === 'Concluído' && status !== 'Concluído';
+
+    const updatedAt = new Date(ped_updated_at);
+    const now = new Date();
+    const diffMinutes = (now - updatedAt) / (1000 * 60);
+
+    if ((isReactivating || isConcludedChange) && diffMinutes > 5) {
+      return res.status(403).json({ error: "Não é permitido modificar esse pedido após 5 minutos da conclusão/cancelamento." });
+    }
+
+    const updateQuery = "UPDATE ped_pedido SET ped_status = ?, ped_updated_at = CURRENT_TIMESTAMP WHERE ped_id = ?";
+
+    db.query(updateQuery, [status, id], (updateErr, result) => {
+      if (updateErr) {
+        console.error("Erro ao atualizar status do pedido:", updateErr);
+        return res.status(500).json({ error: "Erro ao atualizar status do pedido." });
+      }
+
+      return res.status(200).json({ message: "Status do pedido atualizado com sucesso!" });
+    });
+  });
+};
+
+// New controller functions for revenue aggregation
+
+export const getDailyRevenue = (req, res) => {
+  const query = `
+    SELECT DATE(ped_data) AS dia, SUM(ped_valor) AS receita
+    FROM ped_pedido
+    WHERE ped_desativado = 0
+    GROUP BY DATE(ped_data)
+    ORDER BY DATE(ped_data) ASC
+  `;
+
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error("Erro ao buscar receita diária:", err);
+      return res.status(500).json({ error: "Erro ao buscar receita diária." });
+    }
+    return res.status(200).json(results);
+  });
+};
+
+export const getWeeklyRevenue = (req, res) => {
+  const query = `
+    SELECT YEAR(ped_data) AS ano, WEEK(ped_data, 1) AS semana, SUM(ped_valor) AS receita
+    FROM ped_pedido
+    WHERE ped_desativado = 0
+    GROUP BY YEAR(ped_data), WEEK(ped_data, 1)
+    ORDER BY YEAR(ped_data), WEEK(ped_data, 1) ASC
+  `;
+
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error("Erro ao buscar receita semanal:", err);
+      return res.status(500).json({ error: "Erro ao buscar receita semanal." });
+    }
+    return res.status(200).json(results);
+  });
+};
+
+export const getMonthlyRevenue = (req, res) => {
+  const query = `
+    SELECT YEAR(ped_data) AS ano, MONTH(ped_data) AS mes, SUM(ped_valor) AS receita
+    FROM ped_pedido
+    WHERE ped_desativado = 0
+    GROUP BY YEAR(ped_data), MONTH(ped_data)
+    ORDER BY YEAR(ped_data), MONTH(ped_data) ASC
+  `;
+
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error("Erro ao buscar receita mensal:", err);
+      return res.status(500).json({ error: "Erro ao buscar receita mensal." });
+    }
+    return res.status(200).json(results);
   });
 };

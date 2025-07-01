@@ -37,7 +37,6 @@ import { db } from "../db.js";
 //   });
 // };
 
-// FIXME: Busca do mês retorna valor errado
 export const getMounthSum = (req, res) => {
   const currentMonthQuery = `
     SELECT 
